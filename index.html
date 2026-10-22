@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TinkerPCB</title>
+<!--
+  Design Read: Operate tool for secondary STEM students, workshop bench,
+  Cloof ink on paper with one amber accent. Dials 4 / 3 / 6.
+  Locked light theme: classroom overhead light, paper worksheet around a green board.
+-->
+<style>
+  :root {
+    --ink: #1c1b19;
+    --paper: #f3f1ec;
+    --paper-2: #e6e1d6;
+    --muted: #5c574e;
+    --line: #d5cfc4;
+    --accent: #8a5a0c;
+    --amber: #c4841d;
+    --danger: #8d2f24;
+    --ok: #1e6a42;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --r: 8px;
+    --z-toast: 40;
+    --font: "PingFang HK", "Noto Sans HK", "Heiti TC", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button {
+    min-height: 44px;
+    border: 1px solid var(--line);
+    background: transparent;
+    border-radius: var(--r);
+    padding: 0 12px;
+    cursor: pointer;
+    transition: transform 160ms var(--ease), background-color 160ms var(--ease), border-color 160ms var(--ease);
+  }
+  button:active { transform: scale(0.97); }
+  button:focus { outline: none; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  button.quiet { border-color: transparent; }
+  @media (hover: hover) and (pointer: fine) {
+    button:hover:not(:disabled) { border-color: var(--ink); }
+    button.primary:hover:not(:disabled) { background: #2c2a26; }
+    .lib-item:hover { background: #efeae1; }
+  }
+  input, select {
+    min-height: 36px;
+    border: 1px solid var(--line);
+    background: #faf8f4;
+    border-radius: var(--r);
+    padding: 0 8px;
+  }
+  input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .app {
+    height: 100vh;
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; flex-direction: column; gap: 1px; min-width: 140px; }
+  .brand strong { font-size: 20px; font-weight: 650; letter-spacing: -0.03em; line-height: 1.1; }
+  .brand span { color: var(--muted); font-size: 12px; }
+  .field { display: flex; flex-direction: column; gap: 2px; }
+  .field span { font-size: 11px; color: var(--muted); }
+  .field input[type="number"] { width: 72px; font-family: var(--mono); font-size: 13px; }
+  #name { width: 160px; }
+  .grow { flex: 1; }
+  .work {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr) 300px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  aside, main { min-height: 0; }
+  .lib, .spec {
+    overflow: auto;
+    padding: 14px 14px 20px;
+  }
+  .lib { border-right: 1px solid var(--line); }
+  .spec { border-left: 1px solid var(--line); }
+  h2 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .note { margin: 0 0 12px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .lib-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lib-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+    margin: 0;
+    padding: 8px 6px 10px;
+    background: #fffdf8;
+  }
+  .lib-item b { font-weight: 650; font-size: 14px; }
+  .lib-item small { color: var(--muted); font-size: 11px; line-height: 1.3; }
+  .lib-item canvas { width: 76px; height: 52px; display: block; }
+  .coach {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .coach span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 5px 10px;
+  }
+  .coach span:nth-child(1) { background: #ffe3b8; }
+  .coach span:nth-child(2) { background: #d7f3df; }
+  .coach span:nth-child(3) { background: #d7e6ff; }
+  .coach span:nth-child(4) { background: #f6d7ea; }
+  .templates { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  main { position: relative; background: #d4cfc6; overflow: hidden; }
+  main.is-3d .legend,
+  main.is-3d [data-layer],
+  main.is-3d .hint { display: none; }
+  .mark {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    height: 22px;
+    width: auto;
+    z-index: 3;
+    pointer-events: none;
+  }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  #board3d {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    touch-action: none;
+  }
+  main.is-3d:not(.nogl) #board3d { display: block; }
+  main.is-3d:not(.nogl) #board { display: none; }
+  main.nogl.is-3d #board { display: block; }
+  .canvas-tools {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+  }
+  .canvas-tools button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .legend {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    font-size: 12px;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: 6px 8px;
+    display: flex;
+    gap: 10px;
+  }
+  .swatch { display: inline-block; width: 18px; height: 4px; margin-right: 4px; vertical-align: middle; border-radius: 1px; }
+  .hint {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    pointer-events: none;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .tabs button { flex: 1; padding: 0 6px; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .row strong { font-weight: 600; }
+  .pins { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  .err { color: var(--danger); }
+  .ok { color: var(--ok); }
+  .steps { margin: 0; padding-left: 18px; }
+  .steps li { margin: 0 0 8px; }
+  .spec input[type="text"] { width: 100%; margin-top: 4px; }
+  footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: var(--r);
+    padding: 10px 14px;
+    z-index: var(--z-toast);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms var(--ease), transform 180ms var(--ease);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media (prefers-reduced-motion: reduce) {
+    button, #toast { transition: none; }
+  }
+  @media (max-width: 800px) {
+    body, .app { height: auto; min-height: 100dvh; overflow: auto; }
+    .work { grid-template-columns: 1fr; grid-template-rows: auto minmax(420px, 56dvh) auto; overflow: visible; }
+    .lib, .spec { border: 0; border-bottom: 1px solid var(--line); }
+    .lib-list { display: flex; gap: 8px; overflow-x: auto; }
+    .lib-item { width: auto; min-width: 160px; }
+    header { flex-wrap: wrap; }
+    .grow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <strong>TinkerPCB</strong>
+      <span data-i18n="tagline">拖一拖，點一點</span>
+    </div>
+    <label class="field"><span data-i18n="project">專案</span><input id="name" type="text" maxlength="24" autocomplete="off"></label>
+    <label class="field"><span data-i18n="width">寬 mm</span><input id="bw" type="number" min="20" max="100" step="1"></label>
+    <label class="field"><span data-i18n="height">高 mm</span><input id="bh" type="number" min="20" max="100" step="1"></label>
+    <div class="grow"></div>
+    <button type="button" id="lang" aria-pressed="false">English</button>
+    <button type="button" id="undo" disabled data-i18n="undo">還原</button>
+    <button type="button" class="primary" id="download" data-i18n="download">下載製板檔</button>
+  </header>
+  <div class="work">
+    <aside class="lib">
+      <h2 data-i18n="examples">例子</h2>
+      <div class="templates">
+        <button type="button" id="tpl-led" data-i18n="tplLed">LED 小燈</button>
+        <button type="button" id="tpl-header" data-i18n="tplHeader">排針小燈</button>
+        <button type="button" id="tpl-ubit" data-i18n="tplUbit">micro:bit 小燈</button>
+        <button type="button" id="tpl-uno" data-i18n="tplUno">UNO 小燈</button>
+        <button type="button" id="tpl-blank" data-i18n="tplBlank">空白板</button>
+      </div>
+      <h2 data-i18n="parts">零件</h2>
+      <p class="note" data-i18n="partsNote">點圖，或者拖上綠色的板。金色圓點就是可以接線的腳。</p>
+      <div class="lib-list" id="lib"></div>
+      <button type="button" id="holes" style="width:100%;margin-top:8px" data-i18n="holes">加四角鎖孔</button>
+    </aside>
+    <main>
+      <canvas id="board" tabindex="0" aria-label="電路板"></canvas>
+      <canvas id="board3d" aria-label="電路板立體圖"></canvas>
+      <div class="coach" aria-hidden="true">
+        <span data-i18n="step1">1 拖圖上板</span>
+        <span data-i18n="step2">2 點兩個腳</span>
+        <span data-i18n="step3">3 睇立體</span>
+        <span data-i18n="step4">4 下載</span>
+      </div>
+      <p class="hint" id="hint"></p>
+      <div class="canvas-tools">
+        <button type="button" id="view-flat" aria-pressed="false" data-i18n="flat">平面</button>
+        <button type="button" id="view-3d" aria-pressed="true" data-i18n="solid">立體</button>
+        <button type="button" id="view-front" data-i18n="front">正面</button>
+        <button type="button" id="zoom-out" aria-label="縮小">−</button>
+        <button type="button" id="zoom-in" aria-label="放大">+</button>
+        <button type="button" id="zoom-fit" data-i18n="fit">合板</button>
+        <button type="button" data-layer="all" aria-pressed="true" data-i18n="all">全部</button>
+        <button type="button" data-layer="0" data-i18n="top">頂層</button>
+        <button type="button" data-layer="1" data-i18n="bottom">底層</button>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:#e6c98a"></i><span data-i18n="top">頂層</span></span>
+        <span><i class="swatch" style="background:#8a6230"></i><span data-i18n="bottom">底層</span></span>
+      </div>
+    </main>
+    <aside class="spec">
+      <div class="tabs" role="tablist">
+        <button type="button" id="tab-net" role="tab" aria-selected="true" data-i18n="tabNet">接線</button>
+        <button type="button" id="tab-drc" role="tab" aria-selected="false" data-i18n="tabCheck">檢查</button>
+        <button type="button" id="tab-fab" role="tab" aria-selected="false" data-i18n="tabOrder">落單</button>
+      </div>
+      <div id="panel-net"></div>
+      <div id="panel-drc" hidden></div>
+      <div id="panel-fab" hidden></div>
+    </aside>
+  </div>
+  <footer>
+    <span id="status" data-i18n="statusStart">先拖一個圖上板</span>
+    <span id="coord"></span>
+  </footer>
+</div>
+<div id="toast" role="status"></div>
+<script src="pcb-engine.js"></script>
+<script src="pcb-view3d.js"></script>
+<script type="importmap">
+{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
+<script type="module">
+(async function () {
+  var T3 = null, OrbitControls = null, three3d = null, lastW = 0, lastH = 0, lastKey = "";
+  try {
+    T3 = await import("three");
+    OrbitControls = (await import("three/addons/controls/OrbitControls.js")).OrbitControls;
+  } catch (e) {}
+  var PCB = window.PCBEngine;
+  var lang = (location.search.indexOf("lang=en") >= 0) ? "en" : (localStorage.getItem("tinkerpcb-lang") || "zh");
+  var STR = {
+    tagline: ["你的第一個電路板創作器", "Your first PCB creator"],
+    project: ["專案", "Name"],
+    width: ["寬 mm", "W mm"],
+    height: ["高 mm", "H mm"],
+    undo: ["還原", "Undo"],
+    download: ["下載製板檔", "Download files"],
+    examples: ["例子", "Examples"],
+    tplLed: ["LED 小燈", "LED light"],
+    tplHeader: ["排針小燈", "Pin light"],
+    tplUbit: ["micro:bit 小燈", "micro:bit light"],
+    tplBlank: ["空白板", "Blank board"],
+    parts: ["零件", "Parts"],
+    partsNote: ["點圖，或者拖上綠色的板。金色圓點就是可以接線的腳。", "Tap a picture, or drag it onto the green board. Gold dots are the feet you connect."],
+    holes: ["加四角鎖孔", "Add corner holes"],
+    step1: ["1 拖圖上板", "1 Drag a part"],
+    step2: ["2 點兩個腳", "2 Tap two feet"],
+    step3: ["3 睇立體", "3 See it in 3D"],
+    step4: ["4 下載", "4 Download"],
+    flat: ["平面", "Flat"],
+    solid: ["立體", "3D"],
+    front: ["正面", "Front"],
+    fit: ["合板", "Fit"],
+    all: ["全部", "All"],
+    top: ["頂層", "Top"],
+    bottom: ["底層", "Bottom"],
+    tabNet: ["接線", "Wires"],
+    tabCheck: ["檢查", "Check"],
+    tabOrder: ["落單", "Order"],
+    statusStart: ["先拖一個圖上板", "Drag a picture onto the board"],
+    nick_led: ["小燈", "Lamp"],
+    tip_led: ["會發光", "It lights up"],
+    nick_res: ["電阻", "Resistor"],
+    tip_res: ["保護小燈", "Protects the lamp"],
+    nick_sw: ["按鈕", "Button"],
+    tip_sw: ["撳一下", "Press it"],
+    nick_buzz: ["蜂鳴器", "Buzzer"],
+    tip_buzz: ["會發聲", "It beeps"],
+    nick_bat: ["電池", "Battery"],
+    tip_bat: ["供電", "Gives power"],
+    nick_hdr3: ["三隻腳", "3 pins"],
+    tip_hdr3: ["接出去", "Connect out"],
+    nick_hdr4: ["四隻腳", "4 pins"],
+    tip_hdr4: ["接出去", "Connect out"],
+    nick_hole: ["螺絲孔", "Screw hole"],
+    tip_hole: ["鎖實塊板", "Holds the board"],
+    nick_ubit: ["micro:bit", "micro:bit"],
+    tip_ubit: ["金手指插口，不用焊接", "Edge fingers, no soldering needed"],
+    nick_uno: ["UNO", "Arduino UNO"],
+    tip_uno: ["插上去，塊板變 shield", "Plug it in, your board is a shield"],
+    tplUno: ["UNO 小燈", "UNO light"],
+    unoFixed: ["UNO 插座就係塊板本身，唔使旋轉。", "The UNO socket IS the board. Nothing to turn."],
+    val_紅: ["紅", "Red"],
+    val_琥珀: ["琥珀", "Amber"],
+    val_綠: ["綠", "Green"],
+    noRoom: ["板上沒有空位", "No empty spot"],
+    noFit: ["這個位置放不下", "It does not fit there"],
+    orbit: ["拖來轉一轉。要改圖先按平面。正面會望落塊板上面。", "Drag to turn. Tap Flat to change parts. Front looks down on the top."],
+    wired: ["已接線", "Connected"],
+    pick2: ["再點另一個腳。Esc 取消。", "Tap another foot. Esc cancels."],
+    foot: ["腳", "foot"],
+    cancelled: ["已取消", "Cancelled"],
+    dlFail: ["下載失敗", "Download failed"],
+    emptyHint: ["從左邊拖一個圖上來。", "Drag a picture from the left."],
+    wiresNote: ["深金色是底層，可以在頂層下面走過。交叉不一定是短路。", "Dark gold is the bottom layer. It can pass under the top. A cross is not always a short."],
+    noWires: ["還沒有接線。點一個金色腳，再點另一個。", "No wires yet. Tap one gold foot, then another."],
+    split: ["拆開", "Split"],
+    netName: ["線路名稱", "Wire name"],
+    rotate: ["旋轉", "Turn"],
+    del: ["刪除", "Delete"],
+    checkOk: ["可以下載。上傳前仍要看廠商預覽。", "Ready to download. Still look at the factory preview before you order."],
+    checkBad: ["有項目未通過。可以下載來看，不要上傳落單。", "Something is not ready. You can download it, but do not order yet."],
+    rules: ["線寬 0.30mm，間距 0.20mm。這是普通工廠做得到的，不是極限。", "Traces are 0.30 mm wide, with 0.20 mm gaps. A normal factory can make this."],
+    mask: ["預覽阻焊", "Board colour"],
+    green: ["綠", "Green"],
+    black: ["黑", "Black"],
+    white: ["白", "White"],
+    limits: ["沒有原理圖，沒有貼片。電池座腳距是 20mm，落單前對一下實物。micro:bit 插口的金手指按官方 pinmap 排列，落單前拿真 micro:bit 比對一次方向。", "No schematic page, no surface-mount parts. The battery holder pins are 20 mm apart. The micro:bit fingers follow the official pin map. Check the direction against a real micro:bit before you order."],
+    order1: ["按右上角下載製板檔。壓縮檔只有製板需要的檔。", "Tap Download files. The zip has only the factory files."],
+    order2: ["打開 jlcpcb.com，按 Order now，上傳這個 zip。", "Open jlcpcb.com, tap Order now, and upload the zip."],
+    order3: ["選 2 層、1.6mm、1oz、噴錫、5 片。顏色在網站選。", "Choose 2 layers, 1.6 mm, 1 oz, HASL, 5 boards. Pick the colour on their site."],
+    order4: ["看他們的預覽。兩層的線交叉，不一定是短路。", "Look at their preview. Lines on two layers can cross without being a short."],
+    order5: ["這個草稿不代付款，也不代下單。", "This draft does not pay or place the order for you."],
+    downloaded: ["已下載製板檔", "Files downloaded"],
+    loaded: ["已載入例子", "Example loaded"],
+    preparing: ["準備檔案", "Preparing"],
+    off: ["超出板邊", "is off the board"],
+    hit: ["相撞", "overlap"],
+    close: ["腳太近", "feet are too close"],
+    nopath: ["走不到線", "cannot connect"],
+    noroute: ["尚未走線", "Not routed yet"]
+  };
+  var NET_EN = {
+    "電池正極": "Battery plus",
+    "按鈕之後": "After the button",
+    "燈的正極": "Lamp plus",
+    "電池負極": "Battery minus",
+    "排針供電": "Pin power",
+    "接地": "Ground"
+  };
+  function showNet(name) {
+    if (lang === "en" && NET_EN[name]) return NET_EN[name];
+    return name;
+  }
+  function t(key) {
+    var row = STR[key];
+    if (!row) return key;
+    return lang === "en" ? row[1] : row[0];
+  }
+  function issueText(e) {
+    if (e.code === "off") return e.ref + " " + t("off");
+    if (e.code === "hit") return e.a + " / " + e.b + " " + t("hit");
+    if (e.code === "close") return e.a + " / " + e.b + " " + t("close");
+    if (e.code === "nopath") return (e.net || "") + " " + t("nopath") + ": " + e.from + " → " + e.to;
+    if (e.code === "noroute") return t("noroute");
+    return e.msg;
+  }
+  /* ---- Three.js WebGL 3D view (KiCad/EasyEDA style: real depth buffer,
+         damped orbit, flip under to see the bottom layer) ---- */
+  function boot3D() {
+    if (three3d !== null) return three3d;
+    if (!T3) { three3d = false; return false; }
+    try {
+      var c3 = document.getElementById("board3d");
+      var renderer = new T3.WebGLRenderer({ canvas: c3, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = T3.PCFSoftShadowMap;
+      var scene = new T3.Scene();
+      scene.background = new T3.Color(0xf1ece2);
+      var camera = new T3.PerspectiveCamera(38, 1, 0.5, 4000);
+      var controls = new OrbitControls(camera, c3);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.enablePan = false;
+      controls.minDistance = 50;
+      controls.maxDistance = 700;
+      controls.maxPolarAngle = Math.PI - 0.05;
+      var hemi = new T3.HemisphereLight(0xfff8ee, 0x9a8a70, 1.15);
+      var sun = new T3.DirectionalLight(0xffffff, 1.7);
+      sun.position.set(60, 140, 90);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(1024, 1024);
+      sun.shadow.camera.left = -140;
+      sun.shadow.camera.right = 140;
+      sun.shadow.camera.top = 140;
+      sun.shadow.camera.bottom = -140;
+      sun.shadow.camera.near = 20;
+      sun.shadow.camera.far = 420;
+      var fill = new T3.DirectionalLight(0xfff0d8, 0.55);
+      fill.position.set(-90, 70, -70);
+      scene.add(hemi, sun, fill);
+      var group = new T3.Group();
+      scene.add(group);
+      three3d = { renderer: renderer, scene: scene, camera: camera, controls: controls, group: group };
+      resize3D();
+      (function loop() {
+        requestAnimationFrame(loop);
+        if (!three3d || mode !== "3d") return;
+        three3d.controls.update();
+        three3d.renderer.render(three3d.scene, three3d.camera);
+      })();
+    } catch (e) {
+      three3d = false;
+    }
+    return three3d;
+  }
+
+  var MATS = null;
+  function mats() {
+    if (MATS) return MATS;
+    function std(color, rough, metal) {
+      return new T3.MeshStandardMaterial({ color: color, roughness: rough == null ? 0.55 : rough, metalness: metal || 0 });
+    }
+    function dark(color) {
+      return std(new T3.Color(color).multiplyScalar(0.62), 0.7);
+    }
+    MATS = {
+      maskGreen: std(0x2eb068, 0.6),
+      maskBlack: std(0x242830, 0.6),
+      maskWhite: std(0xece8dc, 0.6),
+      maskGreenB: dark(0x2eb068),
+      maskBlackB: dark(0x242830),
+      maskWhiteB: dark(0xece8dc),
+      fr4: std(0xd6a86c, 0.8),
+      copperT: std(0xe8b84c, 0.32, 0.7),
+      copperB: std(0x9a7430, 0.4, 0.65),
+      gold: std(0xf0c14a, 0.35, 0.7),
+      dark: std(0x1c2420, 0.6),
+      navy: std(0x24487a, 0.6),
+      teal: std(0x00768a, 0.55),
+      silver: std(0xc4c8ce, 0.35, 0.8),
+      blackP: std(0x22262e, 0.7),
+      capBlue: std(0x3a84e8, 0.45),
+      resBody: std(0xecc68a, 0.65),
+      bandRed: std(0xcc342e, 0.5),
+      bandBlue: std(0x4640b0, 0.5),
+      red: std(0xe23636, 0.4),
+      amber: std(0xf09620, 0.4),
+      green: std(0x2ab056, 0.4),
+      yellow: std(0xffd640, 0.4),
+      coin: std(0xd4a834, 0.35, 0.7),
+      plusRed: std(0xc42828, 0.5)
+    };
+    return MATS;
+  }
+
+  function mesh(geo, mat, x, y, z, shadow) {
+    var m = new T3.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    if (shadow) {
+      m.castShadow = true;
+      m.receiveShadow = true;
+    }
+    return m;
+  }
+  function box(w, h, d, mat, x, y, z) {
+    return mesh(new T3.BoxGeometry(w, h, d), mat, x, y, z, true);
+  }
+  function cyl(r, h, mat, x, y, z) {
+    return mesh(new T3.CylinderGeometry(r, r, h, 20), mat, x, y, z, true);
+  }
+
+  function shapeFromLoop(loop) {
+    var sh = new T3.Shape();
+    loop.forEach(function (pt, i) {
+      if (i === 0) sh.moveTo(pt[0], pt[1]);
+      else sh.lineTo(pt[0], pt[1]);
+    });
+    sh.closePath();
+    return sh;
+  }
+  function roundedShape(w, h, r) {
+    var s = new T3.Shape();
+    s.moveTo(-w / 2, 0);
+    s.lineTo(w / 2 - r, 0);
+    s.quadraticCurveTo(w / 2, 0, w / 2, r);
+    s.lineTo(w / 2, h - r);
+    s.quadraticCurveTo(w / 2, h, w / 2 - r, h);
+    s.lineTo(-w / 2 + r, h);
+    s.quadraticCurveTo(-w / 2, h, -w / 2, h - r);
+    s.lineTo(-w / 2, r);
+    s.quadraticCurveTo(-w / 2, 0, -w / 2 + r, 0);
+    s.closePath();
+    return s;
+  }
+
+  function rebuild3D() {
+    var M = mats();
+    var g = three3d.group;
+    while (g.children.length) {
+      var c = g.children[0];
+      g.remove(c);
+      c.traverse(function (o) { if (o.geometry) o.geometry.dispose(); });
+    }
+    var w = doc.w, h = doc.h;
+    var top = doc.mask === "black" ? M.maskBlack : doc.mask === "white" ? M.maskWhite : M.maskGreen;
+    var boardGeo = new T3.ExtrudeGeometry(shapeFromLoop(PCB.outlineLoops(doc)[0]), { depth: 1.6, bevelEnabled: false });
+    var board = new T3.Mesh(boardGeo, [top, M.fr4]);
+    board.rotation.x = -Math.PI / 2;
+    board.position.set(0, -1.6, h);
+    board.receiveShadow = true;
+    g.add(board);
+
+    var silkCv = document.createElement("canvas");
+    silkCv.width = Math.ceil(w * 20);
+    silkCv.height = 64;
+    var sg = silkCv.getContext("2d");
+    sg.fillStyle = "#f4f1ea";
+    sg.font = "600 30px " + getComputedStyle(document.body).fontFamily;
+    sg.fillText(doc.name || "", 12, 40);
+    if (doc.sig) {
+      sg.textAlign = "right";
+      sg.fillText("CLOOF SIU", (doc.outline === "uno" ? 66.04 : w) * 20 - 12, 40);
+      sg.textAlign = "start";
+    }
+    var silkPlane = new T3.Mesh(
+      new T3.PlaneGeometry(w, 3.2),
+      new T3.MeshBasicMaterial({ map: new T3.CanvasTexture(silkCv), transparent: true })
+    );
+    silkPlane.rotation.x = -Math.PI / 2;
+    var silkDocY = doc.sigTop ? doc.h - 1.6 : (doc.sigY != null ? doc.sigY + 0.6 : 1.6);
+    silkPlane.position.set(w / 2, 0.87, h - silkDocY);
+    g.add(silkPlane);
+
+    (doc.routes || []).forEach(function (r) {
+      (r.segs || []).forEach(function (seg) {
+        if (!seg.pts || seg.pts.length < 2) return;
+        var y = seg.layer === 0 ? 0.075 : -1.675;
+        var mat = seg.layer === 0 ? M.copperT : M.copperB;
+        for (var i = 1; i < seg.pts.length; i++) {
+          var a = seg.pts[i - 1], b = seg.pts[i];
+          var ax = a[0], az = h - a[1], bx = b[0], bz = h - b[1];
+          var dx = bx - ax, dz = bz - az;
+          var len = Math.hypot(dx, dz);
+          if (len < 0.01) continue;
+          var m = box(len + 0.3, 0.09, 0.36, mat, (ax + bx) / 2, y, (az + bz) / 2);
+          m.rotation.y = Math.atan2(-dz, dx);
+          g.add(m);
+        }
+      });
+      (r.vias || []).forEach(function (v) {
+        var x = v[0], z = h - v[1];
+        g.add(cyl(0.55, 0.12, M.gold, x, 0.06, z));
+        g.add(cyl(0.55, 0.12, M.copperB, x, -1.66, z));
+        g.add(cyl(0.3, 1.8, M.dark, x, -0.8, z));
+      });
+    });
+
+    doc.parts.forEach(function (part) {
+      PCB.worldPads(part).forEach(function (p) {
+        var x = p.x, z = h - p.y;
+        if (p.shape === "rect") {
+          g.add(box(p.w, 0.1, p.h, M.gold, x, 0.05, z));
+          g.add(box(p.w, 0.1, p.h, M.copperB, x, -1.65, z));
+          return;
+        }
+        g.add(cyl(p.dia / 2, 0.12, M.gold, x, 0.06, z));
+        g.add(cyl(p.dia / 2, 0.12, M.copperB, x, -1.66, z));
+        if (p.drill) g.add(cyl(p.drill / 2, 1.8, M.dark, x, -0.8, z));
+      });
+    });
+
+    doc.parts.forEach(function (part) {
+      var G = new T3.Group();
+      G.position.set(part.x, 0, doc.h - part.y);
+      G.rotation.y = ((part.rot | 0) * Math.PI) / 180;
+      if (part.type === "led") {
+        var col = part.value === "綠" ? M.green : part.value === "琥珀" ? M.amber : M.red;
+        G.add(cyl(2.5, 6.6, col, 0, 4.8, 0));
+        var dome = new T3.Mesh(new T3.SphereGeometry(1.55, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), col);
+        dome.position.set(0, 8.1, 0);
+        G.add(dome);
+        G.add(cyl(0.28, 1.6, M.gold, -1.27, 0.9, 0));
+        G.add(cyl(0.28, 1.6, M.gold, 1.27, 0.9, 0));
+      } else if (part.type === "res") {
+        G.add(box(6.3, 2.4, 2.5, M.resBody, 0, 4.0, 0));
+        G.add(box(1.1, 2.5, 2.6, M.bandRed, -0.9, 4.0, 0));
+        G.add(box(0.7, 2.5, 2.6, M.bandBlue, 1.2, 4.0, 0));
+        [-5.08, 5.08].forEach(function (lx) {
+          G.add(cyl(0.28, 3.8, M.gold, lx, 2.0, 0));
+          G.add(cyl(0.28, 1.93, M.gold, lx < 0 ? -4.115 : 4.115, 3.95, 0));
+          G.children[G.children.length - 1].rotation.z = Math.PI / 2;
+        });
+      } else if (part.type === "sw") {
+        G.add(box(6.4, 3.1, 6.4, M.blackP, 0, 1.6, 0));
+        G.add(cyl(2.15, 2.3, M.capBlue, 0, 4.3, 0));
+      } else if (part.type === "buzz") {
+        G.add(cyl(5.4, 5.7, M.blackP, 0, 2.9, 0));
+        G.add(cyl(2.3, 0.3, M.gold, 0, 5.9, 0));
+      } else if (part.type === "bat") {
+        G.add(box(16.5, 3.4, 11, M.silver, 0, 1.75, 0));
+        G.add(cyl(5.8, 0.75, M.coin, 0, 3.775, 0));
+        G.add(box(1.6, 0.35, 0.45, M.plusRed, -3.2, 4.3, 2.2));
+        G.add(box(0.45, 0.35, 1.6, M.plusRed, -3.2, 4.3, 2.2));
+      } else if (part.type === "hdr3" || part.type === "hdr4") {
+        var n = part.type === "hdr3" ? 3 : 4;
+        G.add(box(2.5, 2.4, n * 2.54 - 0.5, M.blackP, 0, 1.25, 0));
+        for (var i = 0; i < n; i++) {
+          G.add(cyl(0.3, 5.2, M.gold, 0, 5.1, (i - (n - 1) / 2) * 2.54));
+        }
+      } else if (part.type === "ubit") {
+        var ubGeo = new T3.ExtrudeGeometry(roundedShape(51.6, 42, 1.5), { depth: 1.9, bevelEnabled: false });
+        var ubMat = new T3.MeshStandardMaterial({ color: 0x24487a, roughness: 0.6, transparent: true, opacity: 0.82 });
+        var ub = new T3.Mesh(ubGeo, ubMat);
+        ub.rotation.x = -Math.PI / 2;
+        ub.position.set(0, 2.85, 0);
+        ub.castShadow = true;
+        G.add(ub);
+        G.add(box(48, 1.98, 1.2, M.gold, 0, 3.84, -0.6));
+        for (var mx = -2; mx <= 2; mx++) {
+          for (var my = 0; my < 5; my++) {
+            G.add(cyl(1.05, 0.2, M.yellow, mx * 4, 4.85, -(17 + my * 4)));
+          }
+        }
+      } else if (part.type === "uno") {
+        /* Real shield stacking: the UNO is the BASE under the kid's
+           board. Slab + sockets + connectors all follow the footprint's
+           own frame (connectors at the right-edge band). Flip under to
+           see the UNO board. */
+        var unoGeo = new T3.ExtrudeGeometry(shapeFromLoop(PCB.outlineLoops({ outline: "uno", w: 68.58, h: 53.34 })[0]), { depth: 1.7, bevelEnabled: false });
+        var unoMat = new T3.MeshStandardMaterial({ color: 0x00768a, roughness: 0.55 });
+        var unoSlab = new T3.Mesh(unoGeo, unoMat);
+        unoSlab.rotation.x = -Math.PI / 2;
+        unoSlab.position.set(0, -11.8, doc.h);
+        unoSlab.castShadow = true;
+        G.add(unoSlab);
+        G.add(box(19.78, 8.5, 2.4, M.blackP, 36.83, -5.85, -2.54));
+        G.add(box(14.7, 8.5, 2.4, M.blackP, 57.15, -5.85, -2.54));
+        G.add(box(24.86, 8.5, 2.4, M.blackP, 30.226, -5.85, -50.8));
+        G.add(box(19.78, 8.5, 2.4, M.blackP, 54.61, -5.85, -50.8));
+        G.add(box(4.7, 8.5, 7.2, M.blackP, 64.9, -5.85, -27.94));
+        G.add(box(11, 2.6, 8, M.silver, 71, -8.8, -20));
+        G.add(box(10, 3.2, 9, M.blackP, 72, -8.5, -33));
+      }
+      g.add(G);
+    });
+  }
+
+  function fitCam3D() {
+    var d = Math.hypot(doc.w, doc.h) * 1.5 + 45;
+    var th = 0.55, ph = 1.0;
+    for (var i = 0; i < doc.parts.length; i++) {
+      if (doc.parts[i].type === "uno") { ph = 0.78; d += 15; break; }
+    }
+    var c = new T3.Vector3(doc.w / 2, 0, doc.h / 2);
+    three3d.camera.position.set(
+      c.x + Math.sin(th) * d * Math.cos(ph),
+      Math.sin(ph) * d,
+      c.z + Math.cos(th) * d * Math.cos(ph)
+    );
+    three3d.controls.target.copy(c);
+    three3d.controls.update();
+  }
+  function sync3D() {
+    var key = JSON.stringify(doc);
+    if (key === lastKey) return;
+    lastKey = key;
+    rebuild3D();
+    if (doc.w !== lastW || doc.h !== lastH) {
+      lastW = doc.w;
+      lastH = doc.h;
+      fitCam3D();
+    }
+  }
+  function resize3D() {
+    if (!three3d) return;
+    var c3 = document.getElementById("board3d");
+    var r = c3.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return;
+    three3d.renderer.setSize(r.width, r.height, false);
+    three3d.camera.aspect = r.width / Math.max(1, r.height);
+    three3d.camera.updateProjectionMatrix();
+  }
+  function dolly3D(f) {
+    if (!three3d) return;
+    var tg = three3d.controls.target;
+    var p = three3d.camera.position;
+    p.sub(tg).multiplyScalar(f).add(tg);
+    three3d.controls.update();
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang === "en" ? "en" : "zh-Hant";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    var langBtn = document.getElementById("lang");
+    langBtn.textContent = lang === "en" ? "中文" : "English";
+    langBtn.setAttribute("aria-pressed", lang === "en" ? "true" : "false");
+    try { localStorage.setItem("tinkerpcb-lang", lang); } catch (e) {}
+    if (typeof buildLib === "function") {
+      document.getElementById("lib").textContent = "";
+      buildLib();
+    }
+    if (typeof renderSide === "function" && doc) renderSide();
+  }
+  var MASKS = { green: "#1f6b45", black: "#1a1a1a", white: "#e4e0d6" };
+  var KEY = "pcb-studio-v1";
+  window.addEventListener("error", function (ev) {
+    var msg = (ev && ev.message) ? String(ev.message).slice(0, 90) : "未知錯誤";
+    try {
+      var st = document.getElementById("status");
+      st.textContent = "出錯：" + msg;
+      st.style.color = "#b3402f";
+      document.title = "ERR " + msg;
+    } catch (e) {}
+  });
+
+  var modeParam = location.search.indexOf("mode=flat") >= 0;
+  var doc, undo = [], selected = null, wire = null, layer = "all", mode = modeParam ? "flat" : "3d", cam = null;
+  var view = { zoom: 1, panX: 0, panY: 0, s: 8, ox: 20, oy: 20 };
+  var drag = null;
+  var canvas = document.getElementById("board");
+  var ctx = canvas.getContext("2d");
+  var toastTimer = 0;
+
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+  function snapshot() {
+    undo.push(PCB.clone(doc));
+    if (undo.length > 40) undo.shift();
+    document.getElementById("undo").disabled = false;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(doc)); } catch (e) {}
+  }
+  function loadDoc(next) {
+    doc = next;
+    selected = null;
+    wire = null;
+    view.zoom = 1;
+    view.panX = 0;
+    view.panY = 0;
+    if (doc.nets.length && !doc.routes.length) PCB.route(doc);
+    syncHead();
+    renderSide();
+    draw();
+    save();
+  }
+  function syncHead() {
+    document.getElementById("name").value = doc.name;
+    document.getElementById("bw").value = doc.w;
+    document.getElementById("bh").value = doc.h;
+    var shield = doc.outline === "uno";
+    document.getElementById("bw").disabled = shield;
+    document.getElementById("bh").disabled = shield;
+  }
+  function mutate(fn) {
+    snapshot();
+    fn();
+    PCB.route(doc);
+    renderSide();
+    draw();
+    save();
+  }
+
+  function fits(type, x, y, ignore, rot) {
+    var ghost = { type: type, x: x, y: y, rot: rot || 0 };
+    var box = PCB.bodyBox(ghost);
+    if (box.x < 0 || box.y < 0 || box.x + box.w > doc.w || box.y + box.h > doc.h) return false;
+    for (var i = 0; i < doc.parts.length; i++) {
+      if (doc.parts[i].uid === ignore) continue;
+      var b = PCB.bodyBox(doc.parts[i]);
+      if (box.x < b.x + b.w && box.x + box.w > b.x && box.y < b.y + b.h && box.y + box.h > b.y) return false;
+    }
+    return true;
+  }
+  function dockUbit(x, y) {
+    var m = 28;
+    var edges = [
+      { d: y, rot: 0, x: Math.max(m, Math.min(doc.w - m, PCB.snap(x))), y: 0 },
+      { d: doc.h - y, rot: 180, x: Math.max(m, Math.min(doc.w - m, PCB.snap(x))), y: doc.h },
+      { d: x, rot: 270, x: 0, y: Math.max(m, Math.min(doc.h - m, PCB.snap(y))) },
+      { d: doc.w - x, rot: 90, x: doc.w, y: Math.max(m, Math.min(doc.h - m, PCB.snap(y))) }
+    ];
+    edges.sort(function (a, b) { return a.d - b.d; });
+    return edges[0];
+  }
+  function dockUno() {
+    /* the UNO socket IS the board: the board becomes the official shield */
+    PCB.setOutline(doc, "uno");
+    PCB.setBoard(doc, 68.58, 53.34);
+    return { x: 0, y: 0, rot: 0 };
+  }
+  function dockPart(part, x, y) {
+    if (part.type === "ubit") return dockUbit(x, y);
+    if (part.type === "uno") return dockUno(x, y);
+    return null;
+  }
+  function rotateSel(uid) {
+    var part = PCB.findPart(doc, uid);
+    if (!part) return;
+    if (part.type === "ubit") {
+      var next = (part.rot + 90) % 360;
+      if (next === 0) { part.rot = 0; part.y = 0; part.x = Math.max(28, Math.min(doc.w - 28, part.x)); }
+      else if (next === 90) { part.rot = 90; part.x = doc.w; part.y = Math.max(28, Math.min(doc.h - 28, part.y)); }
+      else if (next === 180) { part.rot = 180; part.y = doc.h; part.x = Math.max(28, Math.min(doc.w - 28, part.x)); }
+      else { part.rot = 270; part.x = 0; part.y = Math.max(28, Math.min(doc.h - 28, part.y)); }
+      doc.routes = [];
+      return;
+    }
+    if (part.type === "uno") {
+      setStatus(t("unoFixed"));
+      return;
+    }
+    PCB.rotatePart(doc, uid);
+  }
+  function freeSpot(type) {
+    for (var i = 0; i < 24; i++) {
+      var x = PCB.snap(doc.w / 2 + ((i % 6) - 2.5) * 7);
+      var y = PCB.snap(doc.h / 2 + (Math.floor(i / 6) - 1.5) * 7);
+      if (fits(type, x, y)) return { x: x, y: y };
+    }
+    return null;
+  }
+
+  var NICK = {
+    led: ["小燈", "會發光"],
+    res: ["電阻", "保護小燈"],
+    sw: ["按鈕", "撳一下"],
+    buzz: ["蜂鳴器", "會發聲"],
+    bat: ["電池", "供電"],
+    hdr3: ["三隻腳", "接出去"],
+    hdr4: ["四隻腳", "接出去"],
+    hole: ["螺絲孔", "鎖實塊板"]
+  };
+  function paintIcon(kind, g) {
+    g.clearRect(0, 0, 76, 52);
+    g.fillStyle = "#e7f6ec";
+    g.beginPath();
+    g.roundRect(4, 6, 68, 40, 8);
+    g.fill();
+    if (kind === "led") {
+      g.fillStyle = "#e23b3b";
+      g.beginPath(); g.arc(38, 24, 12, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#ffd7a8";
+      g.beginPath(); g.arc(34, 20, 4, 0, Math.PI * 2); g.fill();
+    } else if (kind === "res") {
+      g.fillStyle = "#e4c48c";
+      g.fillRect(16, 18, 44, 14);
+      g.fillStyle = "#c43b34"; g.fillRect(30, 18, 5, 14);
+      g.fillStyle = "#4030a0"; g.fillRect(38, 18, 4, 14);
+    } else if (kind === "sw") {
+      g.fillStyle = "#30343c";
+      g.fillRect(24, 14, 28, 24);
+      g.fillStyle = "#4084e8";
+      g.beginPath(); g.arc(38, 26, 8, 0, Math.PI * 2); g.fill();
+    } else if (kind === "buzz") {
+      g.fillStyle = "#2a2e36";
+      g.beginPath(); g.arc(38, 26, 14, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = "#e8b040"; g.lineWidth = 2;
+      g.beginPath(); g.arc(38, 26, 6, 0, Math.PI * 2); g.stroke();
+    } else if (kind === "bat") {
+      g.fillStyle = "#b0b6be";
+      g.fillRect(16, 14, 44, 24);
+      g.fillStyle = "#d4a840";
+      g.beginPath(); g.arc(38, 26, 8, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#c42828";
+      g.fillRect(36, 20, 4, 8);
+      g.fillRect(34, 22, 8, 4);
+    } else if (kind === "header") {
+      g.fillStyle = "#242830";
+      g.fillRect(34, 8, 8, 36);
+      g.fillStyle = "#e8b040";
+      g.fillRect(30, 12, 6, 4);
+      g.fillRect(30, 24, 6, 4);
+      g.fillRect(30, 36, 6, 4);
+    } else if (kind === "ubit") {
+      g.fillStyle = "#2a4a78";
+      g.beginPath(); g.roundRect(14, 8, 48, 30, 4); g.fill();
+      g.fillStyle = "#ffd640";
+      for (var rx = 0; rx < 5; rx++) for (var ry = 0; ry < 5; ry++) {
+        g.beginPath(); g.arc(24 + rx * 7, 13 + ry * 5, 1.8, 0, Math.PI * 2); g.fill();
+      }
+      g.fillStyle = "#e8b040";
+      g.fillRect(14, 41, 48, 5);
+    } else if (kind === "uno") {
+      g.fillStyle = "#007a8a";
+      g.beginPath(); g.roundRect(10, 10, 56, 32, 4); g.fill();
+      g.fillStyle = "#26282e";
+      g.fillRect(18, 12, 24, 5);
+      g.fillRect(40, 35, 24, 5);
+      g.fillStyle = "#c0c4ca";
+      g.fillRect(12, 14, 7, 8);
+      g.fillStyle = "#26282e";
+      g.fillRect(12, 32, 9, 8);
+    } else {
+      g.strokeStyle = "#8a5a0c"; g.lineWidth = 3;
+      g.beginPath(); g.arc(38, 26, 10, 0, Math.PI * 2); g.stroke();
+    }
+  }
+  function buildLib() {
+    var host = document.getElementById("lib");
+    PCB.PARTS.forEach(function (p) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "lib-item";
+      var icon = document.createElement("canvas");
+      icon.width = 76; icon.height = 52;
+      paintIcon(p.draw.kind, icon.getContext("2d"));
+      btn.appendChild(icon);
+      var nick = STR["nick_" + p.id] ? [t("nick_" + p.id), t("tip_" + p.id)] : [p.name, ""];
+      var b = document.createElement("b");
+      b.textContent = nick[0];
+      var small = document.createElement("small");
+      small.textContent = nick[1];
+      btn.appendChild(b);
+      btn.appendChild(small);
+      btn.addEventListener("pointerdown", function (e) {
+        if (e.button !== 0) return;
+        drag = { kind: "lib", type: p.id, x: e.clientX, y: e.clientY, moved: false, pid: e.pointerId };
+        btn.setPointerCapture(e.pointerId);
+      });
+      btn.addEventListener("pointermove", function (e) {
+        if (!drag || drag.kind !== "lib" || drag.pid !== e.pointerId) return;
+        if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 5) drag.moved = true;
+        drag.cx = e.clientX;
+        drag.cy = e.clientY;
+        draw();
+      });
+      btn.addEventListener("pointerup", function (e) {
+        if (!drag || drag.kind !== "lib") return;
+        var type = drag.type;
+        var moved = drag.moved;
+        var cx = e.clientX, cy = e.clientY;
+        drag = null;
+        if (!moved) {
+          var ghost0 = { type: type, x: 0, y: 0, rot: 0 };
+          if (dockPart(ghost0, doc.w / 2, doc.h / 2)) {
+            var d0 = dockPart(ghost0, doc.w / 2, doc.h / 2);
+            if (type !== "uno" && !fits(type, d0.x, d0.y, null, d0.rot)) { setStatus(t("noRoom")); return; }
+            mutate(function () {
+              var p = PCB.addPart(doc, type, d0.x, d0.y);
+              p.rot = d0.rot;
+            });
+            return;
+          }
+          var spot = freeSpot(type);
+          if (!spot) { setStatus(t("noRoom")); return; }
+          mutate(function () { PCB.addPart(doc, type, spot.x, spot.y); });
+          return;
+        }
+        var pt = clientToBoard(cx, cy);
+        if (!pt) return;
+        var x = PCB.snap(pt.x), y = PCB.snap(pt.y);
+        var ghost1 = { type: type, x: 0, y: 0, rot: 0 };
+        if (dockPart(ghost1, pt.x, pt.y)) {
+          var d1 = dockPart(ghost1, pt.x, pt.y);
+          if (type !== "uno" && (!d1 || !fits(type, d1.x, d1.y, null, d1.rot))) { setStatus(t("noFit")); draw(); return; }
+          mutate(function () {
+            var p = PCB.addPart(doc, type, d1.x, d1.y);
+            p.rot = d1.rot;
+          });
+          return;
+        }
+        if (!fits(type, x, y)) { setStatus(t("noFit")); draw(); return; }
+        mutate(function () { PCB.addPart(doc, type, x, y); });
+      });
+      host.appendChild(btn);
+    });
+  }
+
+  function setStatus(t) { document.getElementById("status").textContent = t; }
+
+  function resize() {
+    var r = canvas.getBoundingClientRect();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.floor(r.width * dpr));
+    canvas.height = Math.max(1, Math.floor(r.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    resize3D();
+    fit();
+    draw();
+  }
+  function fit() {
+    var r = canvas.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return; /* layout not ready: keep last view */
+    /* reserve top (coach chips) + bottom (tool bar + legend) so chrome
+       never covers the board or its connector fingers */
+    var s = Math.max(0.5, Math.min((r.width - 56) / doc.w, (r.height - 158) / doc.h));
+    view.s = s * view.zoom;
+    view.ox = (r.width - doc.w * view.s) / 2 + view.panX;
+    view.oy = 72 + (r.height - 158 - doc.h * view.s) / 2 + view.panY;
+  }
+  function b2c(x, y) { return [view.ox + x * view.s, view.oy + (doc.h - y) * view.s]; }
+  function clientToBoard(cx, cy) {
+    var r = canvas.getBoundingClientRect();
+    var px = cx - r.left, py = cy - r.top;
+    if (px < 0 || py < 0 || px > r.width || py > r.height) return null;
+    return { x: (px - view.ox) / view.s, y: doc.h - (py - view.oy) / view.s };
+  }
+
+  function hitPad(x, y) {
+    var best = null, bestD = 14;
+    doc.parts.forEach(function (part) {
+      if (PCB.partById(part.type).mechanical) return;
+      PCB.worldPads(part).forEach(function (p) {
+        var c = b2c(p.x, p.y);
+        var d = Math.hypot(x - c[0], y - c[1]);
+        var lim = Math.max(12, (p.dia / 2) * view.s + 6);
+        if (d < lim && d < bestD) { bestD = d; best = { uid: part.uid, pad: p.id, label: p.label, ref: part.ref }; }
+      });
+    });
+    return best;
+  }
+  function hitPart(x, y) {
+    var pt = { x: (x - view.ox) / view.s, y: doc.h - (y - view.oy) / view.s };
+    for (var i = doc.parts.length - 1; i >= 0; i--) {
+      var b = PCB.bodyBox(doc.parts[i]);
+      if (pt.x >= b.x && pt.x <= b.x + b.w && pt.y >= b.y && pt.y <= b.y + b.h) return doc.parts[i];
+    }
+    return null;
+  }
+
+  function drawPart(part, ghost) {
+    var spec = PCB.partById(part.type);
+    var k = ((part.rot || 0) / 90) | 0;
+    ctx.save();
+    var o = b2c(part.x, part.y);
+    ctx.translate(o[0], o[1]);
+    ctx.rotate(-k * Math.PI / 2);
+    ctx.globalAlpha = ghost ? 0.55 : 1;
+    ctx.lineWidth = 1.25;
+    ctx.strokeStyle = "#f4f1ea";
+    ctx.fillStyle = ghost ? "rgba(244,241,234,0.3)" : "rgba(244,241,234,0.08)";
+    var s = view.s;
+    function rect(w, h) {
+      ctx.strokeRect(-w / 2 * s, -h / 2 * s, w * s, h * s);
+    }
+    if (spec.draw.kind === "led") {
+      var col = part.value === "綠" ? "46,168,86" : part.value === "琥珀" ? "232,146,32" : "226,54,54";
+      /* PCB-layout style: translucent colour fill + white silk outline */
+      ctx.fillStyle = "rgba(" + col + ",0.95)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.3 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.stroke();
+      /* cathode flat mark on the K side */
+      ctx.beginPath();
+      ctx.moveTo(1.9 * s, -0.95 * s);
+      ctx.lineTo(1.9 * s, 0.95 * s);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else if (spec.draw.kind === "res") {
+      ctx.fillStyle = "rgba(228,196,140,0.85)";
+      ctx.fillRect(-3.4 * s, -1.3 * s, 6.8 * s, 2.6 * s);
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(-3.4 * s, -1.3 * s, 6.8 * s, 2.6 * s);
+      ctx.fillStyle = "rgba(196,59,52,0.95)";
+      ctx.fillRect(-0.4 * s, -1.3 * s, 0.9 * s, 2.6 * s);
+      ctx.fillStyle = "rgba(64,48,160,0.95)";
+      ctx.fillRect(1.1 * s, -1.3 * s, 0.7 * s, 2.6 * s);
+    } else if (spec.draw.kind === "sw") {
+      ctx.fillStyle = "rgba(48,52,60,0.85)";
+      ctx.fillRect(-3.1 * s, -3.1 * s, 6.2 * s, 6.2 * s);
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(-3.1 * s, -3.1 * s, 6.2 * s, 6.2 * s);
+      ctx.beginPath();
+      ctx.arc(0, 0, 1.7 * s, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (spec.draw.kind === "buzz") {
+      ctx.fillStyle = "rgba(42,46,54,0.85)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 4.9 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(244,241,234,0.8)";
+      ctx.lineWidth = Math.max(1.5, 0.3 * s);
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.2 * s, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (spec.draw.kind === "bat") {
+      ctx.fillStyle = "rgba(176,182,190,0.75)";
+      ctx.fillRect(-8 * s, -5.5 * s, 16 * s, 11 * s);
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(-8 * s, -5.5 * s, 16 * s, 11 * s);
+      ctx.fillStyle = "rgba(244,241,234,0.95)";
+      ctx.fillRect(5.2 * s, -0.25 * s, 2.2 * s, 0.5 * s);
+      ctx.fillRect(5.95 * s, -1 * s, 0.5 * s, 2 * s);
+      ctx.fillRect(-7.4 * s, -0.25 * s, 2.2 * s, 0.5 * s);
+    } else if (spec.draw.kind === "header") {
+      ctx.fillStyle = "rgba(36,40,48,0.85)";
+      ctx.fillRect(-1.2 * s, -spec.draw.n * 1.27 * s, 2.4 * s, spec.draw.n * 2.54 * s);
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(-1.2 * s, -spec.draw.n * 1.27 * s, 2.4 * s, spec.draw.n * 2.54 * s);
+    } else if (spec.draw.kind === "uno") {
+      function strip(x0, w, y) {
+        ctx.fillStyle = "#26282e";
+        ctx.fillRect(x0 * s, -(y + 1.2) * s, w * s, 2.4 * s);
+      }
+      strip(26.94, 19.78, 2.54);
+      strip(49.8, 14.7, 2.54);
+      strip(17.8, 24.86, 50.8);
+      strip(44.72, 19.78, 50.8);
+      strip(62.6, 4.6, 27.94);
+      ctx.fillStyle = "#f4f1ea";
+      ctx.textAlign = "center";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      spec.pads.forEach(function (p) {
+        if (p.group === "NC" || p.group === "H") return;
+        if (p.x > 62 && p.y > 20 && p.y < 36) return; /* ICSP: too tight */
+        var below = p.y > 40;
+        ctx.save();
+        ctx.font = Math.max(6, 1.1 * s) + "px " + getComputedStyle(document.body).fontFamily;
+        ctx.translate(p.x * s, below ? -(p.y - 1.3) * s : -(p.y + 1.3) * s);
+        ctx.rotate(below ? Math.PI / 2 : -Math.PI / 2);
+        ctx.fillText(p.label, 0, 0);
+        ctx.restore();
+      });
+      ctx.textAlign = "start";
+      ctx.textBaseline = "alphabetic";
+      ctx.textAlign = "start";
+      /* tinted UNO outline (the real shield shape) + white edge */
+      ctx.beginPath();
+      PCB.outlineLoops({ outline: "uno" })[0].forEach(function (pt, i) {
+        if (i === 0) ctx.moveTo(pt[0] * s, -pt[1] * s);
+        else ctx.lineTo(pt[0] * s, -pt[1] * s);
+      });
+      ctx.closePath();
+      /* NO fill: a tint over the whole board washes out the kid's
+         circuit underneath. The outline + solid strips carry it. */
+      ctx.strokeStyle = "rgba(244, 241, 234, 0.9)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (spec.draw.kind === "ubit") {
+      ctx.fillStyle = "#e8b040";
+      for (var fi = 0; fi < 40; fi++) {
+        ctx.fillRect((-24.765 - 0.6 + fi * 1.27) * s, -5.08 * s, 1.2 * s, 5.08 * s);
+      }
+      /* the docked micro:bit: outline only, the circuit below stays readable */
+      ctx.fillStyle = "rgba(36, 72, 118, 0.15)";
+      ctx.beginPath();
+      ctx.roundRect(-25.8 * s, -42 * s, 51.6 * s, 42 * s, Math.min(6, 1.5 * s));
+      ctx.fill();
+      ctx.strokeStyle = "rgba(244, 241, 234, 0.9)";
+      ctx.lineWidth = 1.25;
+      ctx.stroke();
+      ctx.fillStyle = "#c4c8ce";
+      ctx.fillRect(0.8 * s, -42.4 * s, 4.5 * s, 2.1 * s);
+      ctx.fillStyle = "#ffd640";
+      for (var mx = -2; mx <= 2; mx++) {
+        for (var my = 0; my < 5; my++) {
+          ctx.beginPath();
+          ctx.arc(mx * 4 * s, -(17 + my * 4) * s, Math.max(1.5, 1.05 * s), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    } else if (spec.draw.kind === "hole") {
+      ctx.strokeStyle = "#8a5a0c";
+      ctx.lineWidth = Math.max(2, 0.4 * s);
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.2 * s, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+    if (spec.draw.kind === "ubit" && !ghost) {
+      /* labels in board coordinates so they always read upright */
+      var bc = PCB.bodyBox(part);
+      var cx = bc.x + bc.w / 2, cy = bc.y + bc.h / 2;
+      var groups = {};
+      var edgeAll = [];
+      PCB.worldPads(part).forEach(function (p) {
+        edgeAll.push(p);
+        if (["GND", "3V", "P0", "P1", "P2"].indexOf(p.group) < 0) return;
+        (groups[p.group] = groups[p.group] || []).push(p);
+      });
+      var ex = edgeAll.reduce(function (a, p) { return a + p.x; }, 0) / edgeAll.length;
+      var ey = edgeAll.reduce(function (a, p) { return a + p.y; }, 0) / edgeAll.length;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      var sign = (cy - ey) >= 0 ? 1 : -1;
+      Object.keys(groups).forEach(function (gk) {
+        var ps = groups[gk];
+        var px = ps.reduce(function (a, p) { return a + p.x; }, 0) / ps.length;
+        var c = b2c(px, ey + sign * 7);
+        ctx.fillStyle = "#f4f1ea";
+        ctx.font = Math.max(7, 1.8 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText(gk, c[0], c[1]);
+      });
+      if (edgeAll.length) {
+        var tc = b2c(cx, ey + sign * 11.5);
+        ctx.fillStyle = "#f4f1ea";
+        ctx.font = Math.max(9, 2.6 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("micro:bit", tc[0], tc[1]);
+      }
+      ctx.textAlign = "start";
+      ctx.textBaseline = "alphabetic";
+    }
+    if (part.uid && part.uid === selected) {
+      var b = PCB.bodyBox(part);
+      var a = b2c(b.x, b.y + b.h);
+      var c = b2c(b.x + b.w, b.y);
+      ctx.save();
+      ctx.strokeStyle = "#c4841d";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(a[0] - 3, a[1] - 3, c[0] - a[0] + 6, c[1] - a[1] + 6);
+      ctx.restore();
+    }
+  }
+
+  function drawTraces(which) {
+    (doc.routes || []).forEach(function (r) {
+      (r.segs || []).forEach(function (seg) {
+        if (which !== "all" && String(seg.layer) !== String(which)) return;
+        ctx.beginPath();
+        seg.pts.forEach(function (p, i) {
+          var c = b2c(p[0], p[1]);
+          if (i === 0) ctx.moveTo(c[0], c[1]);
+          else ctx.lineTo(c[0], c[1]);
+        });
+        ctx.strokeStyle = seg.layer === 1 ? "#9a6f38" : "#f2ca62";
+        ctx.lineWidth = Math.max(2.5, PCB.TRACE * view.s);
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.stroke();
+      });
+      if (which === "1") return;
+      (r.vias || []).forEach(function (v) {
+        var c = b2c(v[0], v[1]);
+        ctx.beginPath();
+        ctx.arc(c[0], c[1], (PCB.VIA_PAD / 2) * view.s, 0, Math.PI * 2);
+        ctx.fillStyle = "#e6c98a";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(c[0], c[1], 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = "#14241c";
+        ctx.fill();
+      });
+    });
+  }
+
+var mainEl = document.querySelector("main");
+  function draw() {
+    try {
+      drawInner();
+    } catch (e) {
+      setStatus("出錯：" + String(e && e.message ? e.message : e).slice(0, 80));
+    }
+  }
+  function drawInner() {
+    var r = canvas.getBoundingClientRect();
+    mainEl.classList.toggle("is-3d", mode === "3d");
+    if (mode === "3d") {
+      boot3D();
+      mainEl.classList.toggle("nogl", !three3d);
+      if (three3d) {
+        sync3D();
+        setStatus(t("orbit"));
+        return;
+      }
+      if (!cam) cam = PCBView3D.frame(doc, canvas.width, canvas.height);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      PCBView3D.draw(ctx, canvas.width, canvas.height, doc, cam, PCB);
+      setStatus(t("orbit"));
+      return;
+    }
+    ctx.setTransform(canvas.width / r.width, 0, 0, canvas.height / r.height, 0, 0);
+    ctx.clearRect(0, 0, r.width, r.height);
+    ctx.fillStyle = "#d4cfc6";
+    ctx.fillRect(0, 0, r.width, r.height);
+    var o = b2c(0, doc.h);
+    var e = b2c(doc.w, 0);
+    ctx.beginPath();
+    PCB.outlineLoops(doc).forEach(function (loop) {
+      loop.forEach(function (pt, i) {
+        var c = b2c(pt[0], pt[1]);
+        if (i === 0) ctx.moveTo(c[0], c[1]);
+        else ctx.lineTo(c[0], c[1]);
+      });
+      ctx.closePath();
+    });
+    ctx.fillStyle = MASKS[doc.mask] || MASKS.green;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.save();
+    ctx.clip();
+    /* grid: dark on green/white masks, light on black — must be visible */
+    var gridCol = doc.mask === "black" ? "rgba(255,255,255,0.12)" : doc.mask === "white" ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.22)";
+    ctx.strokeStyle = gridCol;
+    ctx.lineWidth = 1;
+    for (var gx = 0; gx <= doc.w; gx += 2.54) {
+      var a = b2c(gx, 0), b = b2c(gx, doc.h);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    for (var gy = 0; gy <= doc.h; gy += 2.54) {
+      a = b2c(0, gy); b = b2c(doc.w, gy);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    function isDock(p) { return PCB.partById(p.type).edge; }
+    if (layer !== "0") drawTraces("1");
+    if (layer !== "1") drawTraces(layer === "all" ? "0" : layer);
+    doc.parts.forEach(function (p) { if (!isDock(p)) drawPart(p, false); });
+    doc.parts.forEach(function (p) { if (isDock(p)) drawPart(p, false); });
+    doc.parts.forEach(function (part) {
+      PCB.worldPads(part).forEach(function (p) {
+        var c = b2c(p.x, p.y);
+        if (p.shape === "rect") {
+          var hw = p.w / 2 * view.s, hh = p.h / 2 * view.s;
+          ctx.fillStyle = "#e7d7a8";
+          ctx.fillRect(c[0] - hw, c[1] - hh, hw * 2, hh * 2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(c[0], c[1], (p.dia / 2) * view.s, 0, Math.PI * 2);
+          ctx.fillStyle = "#e7d7a8";
+          ctx.fill();
+          /* no drill dot in 2D: under a part body it reads as a pupil;
+             the drill lives in the gerber and the 3D view */
+        }
+        if (wire && wire.uid === part.uid && wire.pad === p.id) {
+          ctx.beginPath();
+          ctx.arc(c[0], c[1], Math.max(8, (p.dia / 2) * view.s + 4), 0, Math.PI * 2);
+          ctx.strokeStyle = "#c4841d";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      });
+      ctx.fillStyle = "#f4f1ea";
+      ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+      var box = PCB.bodyBox(part);
+      var tp = b2c(box.x, box.y + box.h);
+      ctx.strokeStyle = "rgba(16, 28, 22, 0.85)";
+      ctx.lineWidth = 3;
+      ctx.strokeText(part.ref, tp[0], tp[1] - 4);
+      ctx.fillText(part.ref, tp[0], tp[1] - 4);
+    });
+    ctx.fillStyle = "#f4f1ea";
+    ctx.font = "600 12px " + getComputedStyle(document.body).fontFamily;
+    var sigBase = doc.sigTop ? doc.h - 2.2 : (doc.sigY != null ? doc.sigY + 1.2 : 1.0);
+    var tPos = b2c(1.2, sigBase);
+    ctx.textAlign = "start";
+    ctx.fillText(doc.name || "", tPos[0], tPos[1]);
+    if (doc.sig) {
+      ctx.textAlign = "right";
+      var edgeR = doc.outline === "uno" ? 66.04 : doc.w;
+      var sPos = b2c(edgeR - 1.4, sigBase);
+      ctx.fillText("CLOOF SIU", sPos[0], sPos[1]);
+      ctx.textAlign = "start";
+    }
+    (doc.unrouted || []).forEach(function (u) {
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = "#c4841d";
+      ctx.lineWidth = 1.25;
+      ctx.setLineDash([]);
+    });
+    ctx.restore();
+    if (drag && drag.kind === "lib" && drag.moved && drag.cx) {
+      var pt = clientToBoard(drag.cx, drag.cy);
+      if (pt) drawPart({ type: drag.type, x: PCB.snap(pt.x), y: PCB.snap(pt.y), rot: 0, value: "" }, true);
+    }
+    var empty = !doc.parts.length;
+    document.getElementById("hint").textContent = empty ? t("emptyHint") : (wire ? t("pick2") : "");
+  }
+
+  function netLabel(net) {
+    var groups = PCB.groupsInNet(doc, net);
+    return groups.map(function (g) { return g.ref + "·" + g.label; }).join("  ");
+  }
+
+  function renderSide() {
+    var check = PCB.check(doc);
+    var netHost = document.getElementById("panel-net");
+    var drcHost = document.getElementById("panel-drc");
+    var fabHost = document.getElementById("panel-fab");
+    netHost.textContent = "";
+    var lead = document.createElement("p");
+    lead.className = "note";
+    lead.textContent = doc.nets.length
+      ? t("wiresNote")
+      : t("noWires");
+    netHost.appendChild(lead);
+    doc.nets.forEach(function (n) {
+      var row = document.createElement("div");
+      row.className = "row";
+      var left = document.createElement("div");
+      var name = document.createElement("input");
+      name.type = "text";
+      name.value = showNet(n.name);
+      name.setAttribute("aria-label", t("netName"));
+      name.addEventListener("change", function () {
+        snapshot();
+        PCB.renameNet(doc, n.id, name.value.trim() || n.name);
+        save();
+        renderSide();
+      });
+      var pins = document.createElement("div");
+      pins.className = "pins";
+      pins.textContent = netLabel(n);
+      left.appendChild(name);
+      left.appendChild(pins);
+      var cut = document.createElement("button");
+      cut.type = "button";
+      cut.className = "quiet";
+      cut.textContent = t("split");
+      cut.addEventListener("click", function () {
+        mutate(function () {
+          var pin = n.pins[0];
+          PCB.disconnectPin(doc, pin.uid, pin.pad);
+          doc.nets = doc.nets.filter(function (x) { return x.id !== n.id; });
+        });
+      });
+      row.appendChild(left);
+      row.appendChild(cut);
+      netHost.appendChild(row);
+    });
+    if (selected) {
+      var part = PCB.findPart(doc, selected);
+      if (part) {
+        var spec = PCB.partById(part.type);
+        var box = document.createElement("div");
+        box.style.marginTop = "14px";
+        var h = document.createElement("h2");
+        h.textContent = part.ref + "  " + spec.name;
+        box.appendChild(h);
+        if (spec.values) {
+          spec.values.forEach(function (v) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.textContent = t("val_" + v) === ("val_" + v) ? v : t("val_" + v);
+            b.style.margin = "0 6px 6px 0";
+            if (part.value === v) b.className = "primary";
+            b.addEventListener("click", function () {
+              snapshot();
+              PCB.setValue(doc, part.uid, v);
+              PCB.route(doc);
+              save();
+              renderSide();
+              draw();
+            });
+            box.appendChild(b);
+          });
+        }
+        var rot = document.createElement("button");
+        rot.type = "button";
+        rot.textContent = t("rotate");
+        rot.addEventListener("click", function () { mutate(function () { rotateSel(part.uid); }); });
+        var del = document.createElement("button");
+        del.type = "button";
+        del.textContent = t("del");
+        del.style.marginLeft = "6px";
+        del.addEventListener("click", function () {
+          mutate(function () { PCB.removePart(doc, part.uid); });
+          selected = null;
+        });
+        box.appendChild(rot);
+        box.appendChild(del);
+        netHost.appendChild(box);
+      }
+    }
+    drcHost.textContent = "";
+    var head = document.createElement("p");
+    head.className = check.ok ? "ok" : "err";
+    head.textContent = check.ok ? t("checkOk") : t("checkBad");
+    drcHost.appendChild(head);
+    check.errors.forEach(function (e) {
+      var row = document.createElement("div");
+      row.className = "row err";
+      row.textContent = issueText(e);
+      drcHost.appendChild(row);
+    });
+    check.warnings.forEach(function (e) {
+      var row = document.createElement("div");
+      row.className = "row";
+      row.textContent = issueText(e);
+      drcHost.appendChild(row);
+    });
+    if (!check.errors.length && !check.warnings.length && doc.parts.length) {
+      var ok = document.createElement("p");
+      ok.className = "note";
+      ok.textContent = t("rules");
+      drcHost.appendChild(ok);
+    }
+    fabHost.textContent = "";
+    var ol = document.createElement("ol");
+    ol.className = "steps";
+    [1, 2, 3, 4, 5].forEach(function (n) {
+      var li = document.createElement("li");
+      li.textContent = t("order" + n);
+      ol.appendChild(li);
+    });
+    fabHost.appendChild(ol);
+    var limits = document.createElement("p");
+    limits.className = "note";
+    limits.textContent = t("limits");
+    fabHost.appendChild(limits);
+    var mask = document.createElement("label");
+    mask.className = "field";
+    mask.appendChild(document.createElement("span")).textContent = t("mask");
+    var sel = document.createElement("select");
+    [["green", "green"], ["black", "black"], ["white", "white"]].forEach(function (opt) {
+      var o = document.createElement("option");
+      o.value = opt[0];
+      o.textContent = t(opt[1]);
+      if (doc.mask === opt[0]) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      doc.mask = sel.value;
+      save();
+      draw();
+    });
+    mask.appendChild(sel);
+    fabHost.appendChild(mask);
+  }
+
+  function showTab(id) {
+    ["net", "drc", "fab"].forEach(function (k) {
+      document.getElementById("tab-" + k).setAttribute("aria-selected", k === id ? "true" : "false");
+      document.getElementById("panel-" + k).hidden = k !== id;
+    });
+  }
+
+  canvas.addEventListener("pointerdown", function (e) {
+    canvas.focus();
+    if (mode === "3d") {
+      if (three3d) return; /* OrbitControls owns rotation */
+      drag = { kind: "orbit", pid: e.pointerId, cx: e.clientX, cy: e.clientY, yaw: cam ? cam.yaw : 0.36, pitch: cam ? cam.pitch : 0.78 };
+      canvas.setPointerCapture(e.pointerId);
+      return;
+    }
+    var r = canvas.getBoundingClientRect();
+    var x = e.clientX - r.left, y = e.clientY - r.top;
+    var pad = hitPad(x, y);
+    var part = hitPart(x, y);
+    if (pad) {
+      selected = pad.uid;
+      if (wire && !(wire.uid === pad.uid && wire.pad === pad.pad)) {
+        var from = wire;
+        wire = null;
+        mutate(function () { PCB.connect(doc, from.uid, from.pad, pad.uid, pad.pad); });
+        setStatus(t("wired"));
+        return;
+      }
+      wire = { uid: pad.uid, pad: pad.pad };
+      setStatus(pad.ref + " " + t("foot") + " " + pad.label + ". " + t("pick2"));
+      renderSide();
+      draw();
+      return;
+    }
+    wire = null;
+    if (part) {
+      selected = part.uid;
+      drag = { kind: "move", uid: part.uid, pid: e.pointerId, bx: part.x, by: part.y, cx: e.clientX, cy: e.clientY, moved: false };
+      canvas.setPointerCapture(e.pointerId);
+      renderSide();
+      draw();
+      return;
+    }
+    selected = null;
+    drag = { kind: "pan", pid: e.pointerId, cx: e.clientX, cy: e.clientY, px: view.panX, py: view.panY };
+    canvas.setPointerCapture(e.pointerId);
+    renderSide();
+    draw();
+  });
+  canvas.addEventListener("pointermove", function (e) {
+    var pt = clientToBoard(e.clientX, e.clientY);
+    document.getElementById("coord").textContent = pt ? (pt.x.toFixed(1) + " , " + pt.y.toFixed(1) + " mm") : "";
+    if (!drag || drag.pid !== e.pointerId) return;
+    if (drag.kind === "orbit") {
+      cam.yaw = drag.yaw + (e.clientX - drag.cx) * 0.008;
+      cam.pitch = Math.max(0.35, Math.min(1.35, drag.pitch - (e.clientY - drag.cy) * 0.005));
+      draw();
+      return;
+    }
+    if (drag.kind === "move") {
+      var origin = clientToBoard(drag.cx, drag.cy);
+      var now = clientToBoard(e.clientX, e.clientY);
+      if (!origin || !now) return;
+      var part = PCB.findPart(doc, drag.uid);
+      part.x = PCB.snap(drag.bx + now.x - origin.x);
+      part.y = PCB.snap(drag.by + now.y - origin.y);
+      drag.moved = true;
+      draw();
+    } else if (drag.kind === "pan") {
+      view.panX = drag.px + (e.clientX - drag.cx);
+      view.panY = drag.py + (e.clientY - drag.cy);
+      fit();
+      draw();
+    }
+  });
+  canvas.addEventListener("pointerup", function (e) {
+    if (!drag || drag.pid !== e.pointerId) return;
+    if (drag.kind === "move" && drag.moved) {
+      var part = PCB.findPart(doc, drag.uid);
+      var x = part.x, y = part.y;
+      part.x = drag.bx;
+      part.y = drag.by;
+      if (dockPart(part, 0, 0)) {
+        var bb = PCB.bodyBox({ type: part.type, x: x, y: y, rot: part.rot });
+        var dk = dockPart(part, bb.x + bb.w / 2, bb.y + bb.h / 2);
+        if (part.type !== "uno" && (!dk || !fits(part.type, dk.x, dk.y, part.uid, dk.rot))) {
+          setStatus(t("noFit"));
+          draw();
+        } else {
+          mutate(function () {
+            PCB.movePart(doc, part.uid, dk.x, dk.y);
+            PCB.findPart(doc, part.uid).rot = dk.rot;
+          });
+        }
+      } else if (!fits(part.type, x, y, part.uid)) {
+        setStatus(t("noFit"));
+        draw();
+      } else {
+        mutate(function () { PCB.movePart(doc, part.uid, x, y); });
+      }
+    }
+    drag = null;
+  });
+  canvas.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    if (mode === "3d" && cam) {
+      cam.dist = Math.max(42, Math.min(160, cam.dist + (e.deltaY > 0 ? 6 : -6)));
+      draw();
+      return;
+    }
+    var next = view.zoom * (e.deltaY > 0 ? 0.9 : 1.1);
+    view.zoom = Math.max(0.6, Math.min(4, next));
+    fit();
+    draw();
+  }, { passive: false });
+
+  document.addEventListener("keydown", function (e) {
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+    if (e.key === "Escape") { wire = null; setStatus(t("cancelled")); draw(); }
+    if ((e.key === "r" || e.key === "R") && selected) {
+      e.preventDefault();
+      mutate(function () { rotateSel(selected); });
+    }
+    if ((e.key === "Backspace" || e.key === "Delete") && selected) {
+      e.preventDefault();
+      var uid = selected;
+      selected = null;
+      wire = null;
+      mutate(function () { PCB.removePart(doc, uid); });
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+      e.preventDefault();
+      document.getElementById("undo").click();
+    }
+  });
+
+  document.getElementById("undo").addEventListener("click", function () {
+    if (!undo.length) return;
+    doc = undo.pop();
+    selected = null;
+    wire = null;
+    this.disabled = !undo.length;
+    syncHead();
+    renderSide();
+    draw();
+    save();
+  });
+  document.getElementById("download").addEventListener("click", function () {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = t("preparing");
+    try {
+      PCB.route(doc);
+      var zip = PCB.exportZip(doc);
+      var blob = new Blob([zip], { type: "application/zip" });
+      var a = document.createElement("a");
+      var safe = (doc.name || "board").replace(/[^\u4e00-\u9fffA-Za-z0-9_-]+/g, "");
+      a.href = URL.createObjectURL(blob);
+      a.download = (safe || "board") + "-jlc.zip";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast(t("downloaded"));
+      showTab("fab");
+    } catch (err) {
+      setStatus(t("dlFail"));
+    }
+    btn.disabled = false;
+    btn.textContent = t("download");
+    renderSide();
+    draw();
+  });
+  document.getElementById("name").addEventListener("change", function () {
+    snapshot();
+    doc.name = this.value.trim() || "我的電路板";
+    save();
+  });
+  function readBoard() {
+    var w = Number(document.getElementById("bw").value);
+    var h = Number(document.getElementById("bh").value);
+    mutate(function () { PCB.setBoard(doc, w, h); });
+    syncHead();
+    fit();
+    draw();
+  }
+  document.getElementById("bw").addEventListener("change", readBoard);
+  document.getElementById("bh").addEventListener("change", readBoard);
+  document.getElementById("tpl-led").addEventListener("click", function () {
+    snapshot();
+    var next = PCB.template("led");
+    PCB.route(next);
+    loadDoc(next);
+    toast(t("loaded"));
+  });
+  document.getElementById("tpl-header").addEventListener("click", function () {
+    snapshot();
+    var next = PCB.template("header");
+    PCB.route(next);
+    loadDoc(next);
+  });
+  document.getElementById("tpl-ubit").addEventListener("click", function () {
+    snapshot();
+    var next = PCB.template("ubit");
+    PCB.route(next);
+    loadDoc(next);
+    toast(t("loaded"));
+  });
+  document.getElementById("tpl-uno").addEventListener("click", function () {
+    snapshot();
+    var next = PCB.template("uno");
+    PCB.route(next);
+    loadDoc(next);
+    toast(t("loaded"));
+  });
+  document.getElementById("tpl-blank").addEventListener("click", function () {
+    snapshot();
+    loadDoc(PCB.blank("我的電路板"));
+  });
+  document.getElementById("holes").addEventListener("click", function () {
+    mutate(function () {
+      [[5.08, 5.08], [doc.w - 5.08, 5.08], [5.08, doc.h - 5.08], [doc.w - 5.08, doc.h - 5.08]].forEach(function (p) {
+        if (fits("hole", PCB.snap(p[0]), PCB.snap(p[1]))) PCB.addPart(doc, "hole", p[0], p[1]);
+      });
+    });
+  });
+  function setMode(next) {
+    mode = next;
+    document.getElementById("view-flat").setAttribute("aria-pressed", next === "flat" ? "true" : "false");
+    document.getElementById("view-3d").setAttribute("aria-pressed", next === "3d" ? "true" : "false");
+    wire = null;
+    if (next === "3d") {
+      boot3D();
+      if (three3d) {
+        resize3D();
+        three3d.controls.enabled = true;
+      } else {
+        cam = PCBView3D.frame(doc, canvas.width, canvas.height);
+      }
+    } else if (three3d) {
+      three3d.controls.enabled = false;
+    }
+    draw();
+  }
+  document.getElementById("view-flat").addEventListener("click", function () { setMode("flat"); });
+  document.getElementById("view-3d").addEventListener("click", function () { setMode("3d"); });
+  document.getElementById("view-front").addEventListener("click", function () {
+    setMode("3d");
+    if (three3d) { fitCam3D(); return; }
+    cam = PCBView3D.frame(doc, canvas.width, canvas.height, PCBView3D.frontYaw, PCBView3D.frontPitch);
+    draw();
+  });
+  document.getElementById("lang").addEventListener("click", function () {
+    lang = lang === "en" ? "zh" : "en";
+    applyLang();
+    draw();
+  });
+  document.getElementById("zoom-in").addEventListener("click", function () {
+    if (mode === "3d" && three3d) { dolly3D(0.85); return; }
+    if (mode === "3d" && cam) { cam.dist = Math.max(42, cam.dist - 8); draw(); return; }
+    view.zoom = Math.min(4, view.zoom * 1.2); fit(); draw();
+  });
+  document.getElementById("zoom-out").addEventListener("click", function () {
+    if (mode === "3d" && three3d) { dolly3D(1.18); return; }
+    if (mode === "3d" && cam) { cam.dist = Math.min(160, cam.dist + 8); draw(); return; }
+    view.zoom = Math.max(0.6, view.zoom / 1.2); fit(); draw();
+  });
+  document.getElementById("zoom-fit").addEventListener("click", function () {
+    if (mode === "3d" && three3d) { fitCam3D(); return; }
+    if (mode === "3d") { cam = PCBView3D.frame(doc, canvas.width, canvas.height); draw(); return; }
+    view.zoom = 1; view.panX = 0; view.panY = 0; fit(); draw();
+  });
+  document.querySelectorAll("[data-layer]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      layer = btn.getAttribute("data-layer");
+      document.querySelectorAll("[data-layer]").forEach(function (b) {
+        b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+      });
+      draw();
+    });
+  });
+  document.getElementById("tab-net").addEventListener("click", function () { showTab("net"); });
+  document.getElementById("tab-drc").addEventListener("click", function () { showTab("drc"); });
+  document.getElementById("tab-fab").addEventListener("click", function () { showTab("fab"); });
+
+  var tplParam = location.search.match(/tpl=(led|header|ubit|uno|blank)/);
+  var brokenTest = location.search.indexOf("draft=broken") >= 0;
+  try {
+    var raw = localStorage.getItem(KEY);
+    doc = raw ? JSON.parse(raw) : PCB.template("led");
+  } catch (e) {
+    doc = PCB.template("led");
+  }
+  doc = PCB.sanitize(doc);
+  if (!doc) doc = PCB.template("led");
+  if (brokenTest) {
+    doc = PCB.sanitize({
+      version: 0,
+      name: "爛草稿",
+      w: 999,
+      h: "abc",
+      mask: "black",
+      parts: [
+        { uid: "p1", type: "ghost-part-xyz", x: 10, y: 10, rot: 137, ref: "X1" },
+        { uid: "p2", type: "led", x: 20, y: 20, rot: 45, ref: "D9", value: "紫" },
+        { uid: "p3", type: "res", x: 40, y: 20, rot: 0, ref: "R9", value: "1K" },
+        { uid: "p4", type: "led", x: 60, y: 20, rot: 0, ref: "D8", value: "紅" }
+      ],
+      nets: [
+        { id: "n1", name: "x", pins: [{ uid: "p1", pad: "A" }, { uid: "p2", pad: "A" }, { uid: "p9", pad: "ZZ" }] },
+        { id: "n2", name: "燈的正極", pins: [{ uid: "p2", pad: "K" }, { uid: "p3", pad: "1" }] },
+        { id: "n3", name: "接地", pins: [{ uid: "p3", pad: "2" }, { uid: "p4", pad: "K" }] }
+      ]
+    });
+  }
+  if (tplParam) {
+    doc = PCB.template(tplParam[1]);
+    PCB.route(doc);
+  }
+  if (doc.nets.length && !(doc.routes && doc.routes.length)) PCB.route(doc);
+  syncHead();
+  applyLang();
+  window.addEventListener("resize", resize);
+  requestAnimationFrame(function () { setTimeout(resize, 0); });
+  resize();
+  if (location.search.indexOf("test=1") >= 0) {
+    document.title = "TINKER " + (three3d ? "three" : "fallback");
+  }
+})();
+</script>
+</body>
+</html>
