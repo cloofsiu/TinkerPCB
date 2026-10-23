@@ -734,13 +734,16 @@
       } else if (part.type === "uno") {
         /* Real shield stacking: the UNO is the BASE under the kid's
            board. Slab + sockets + connectors all follow the footprint's
-           own frame (connectors at the right-edge band). Flip under to
-           see the UNO board. */
+           own frame (connectors on the LEFT band, y = Fab-layer truth:
+           USB centre (1.535, 38.10), barrel (5.065, 7.80)). G already
+           carries z = doc.h - part.y, so slab/connector local z must be
+           -y_fp — an extra doc.h here pushed the whole UNO one board
+           length out of alignment. Flip under to see the UNO board. */
         var unoGeo = new T3.ExtrudeGeometry(shapeFromLoop(PCB.outlineLoops({ outline: "uno", w: 68.58, h: 53.34 })[0]), { depth: 1.7, bevelEnabled: false });
         var unoMat = new T3.MeshStandardMaterial({ color: 0x00768a, roughness: 0.55 });
         var unoSlab = new T3.Mesh(unoGeo, unoMat);
         unoSlab.rotation.x = -Math.PI / 2;
-        unoSlab.position.set(0, -11.8, doc.h);
+        unoSlab.position.set(0, -11.8, 0);
         unoSlab.castShadow = true;
         G.add(unoSlab);
         G.add(box(19.78, 8.5, 2.4, M.blackP, 36.83, -5.85, -2.54));
@@ -748,8 +751,8 @@
         G.add(box(24.86, 8.5, 2.4, M.blackP, 30.226, -5.85, -50.8));
         G.add(box(19.78, 8.5, 2.4, M.blackP, 54.61, -5.85, -50.8));
         G.add(box(4.7, 8.5, 7.2, M.blackP, 64.9, -5.85, -27.94));
-        G.add(box(11, 2.6, 8, M.silver, 71, -8.8, -20));
-        G.add(box(10, 3.2, 9, M.blackP, 72, -8.5, -33));
+        G.add(box(15.75, 2.6, 11.81, M.silver, 1.535, -8.8, -38.0986));
+        G.add(box(13.49, 3.2, 8.99, M.blackP, 5.065, -8.5, -7.7981));
       }
       g.add(G);
     });

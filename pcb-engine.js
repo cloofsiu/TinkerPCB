@@ -471,12 +471,18 @@
 
   function outlineLoops(doc) {
     if (doc.outline === "uno") {
-      /* UNO R3 outline, parsed from Arduino_Uno_R3_Shield B.SilkS segments
-         (verified working shield library). Origin = bottom-left, y up.
-         Right-bottom chamfer = barrel-jack corner, right-top notch = USB. */
+      /* UNO R3 outline from Arduino_Uno_R3_Shield B.SilkS segments
+         (verified working shield library), origin = bottom-left, y up.
+         B.SilkS is a BACK layer: as authored it draws the connector band
+         on +x — mirrored here (x -> 68.58 - x) so the outline matches the
+         footprint's own pads/Fab layers, where SCL/SDA (18.8) and
+         NC/IOREF (27.9) are the pins NEAREST the connector edge at x=0,
+         and the Fab bodies put Barrel Jack at (5.07, 7.80) and USB at
+         (1.54, 38.10) on that same edge. Left band = USB/barrel side,
+         left-bottom chamfer = barrel-jack corner. */
       return [[
-        [0, 0], [66.04, 0], [66.04, 1.27], [68.58, 3.81], [68.58, 38.1],
-        [66.04, 40.64], [66.04, 51.816], [64.516, 53.34], [0, 53.34]
+        [2.54, 0], [68.58, 0], [68.58, 53.34], [4.064, 53.34],
+        [2.54, 51.816], [2.54, 40.64], [0, 38.1], [0, 3.81], [2.54, 1.27]
       ]];
     }
     return [[[0, 0], [doc.w, 0], [doc.w, doc.h], [0, doc.h]]];

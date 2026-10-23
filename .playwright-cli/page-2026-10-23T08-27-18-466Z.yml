@@ -1,0 +1,100 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - strong [ref=f2e5]: TinkerPCB
+        - generic [ref=f2e6]: 你的第一個電路板創作器
+      - generic [ref=f2e7]:
+        - generic [ref=f2e8]: 專案
+        - textbox "專案" [ref=f2e9]: UNO 小燈
+      - generic [ref=f2e10]:
+        - generic [ref=f2e11]: 寬 mm
+        - spinbutton "寬 mm" [disabled] [ref=f2e12]: "68.58"
+      - generic [ref=f2e13]:
+        - generic [ref=f2e14]: 高 mm
+        - spinbutton "高 mm" [disabled] [ref=f2e15]: "53.34"
+      - button "English" [ref=f2e16] [cursor=pointer]
+      - button "還原" [disabled] [ref=f2e17]
+      - button "下載製板檔" [ref=f2e18] [cursor=pointer]
+    - generic [ref=f2e19]:
+      - complementary [ref=f2e20]:
+        - heading "例子" [level=2] [ref=f2e21]
+        - generic [ref=f2e22]:
+          - button "LED 小燈" [ref=f2e23] [cursor=pointer]
+          - button "排針小燈" [ref=f2e24] [cursor=pointer]
+          - button "micro:bit 小燈" [ref=f2e25] [cursor=pointer]
+          - button "UNO 小燈" [ref=f2e26] [cursor=pointer]
+          - button "空白板" [ref=f2e27] [cursor=pointer]
+        - heading "零件" [level=2] [ref=f2e28]
+        - paragraph [ref=f2e29]: 點圖，或者拖上綠色的板。金色圓點就是可以接線的腳。
+        - generic [ref=f2e30]:
+          - button "小燈 會發光" [ref=f2e31] [cursor=pointer]:
+            - generic [ref=f2e33]: 小燈
+            - generic [ref=f2e34]: 會發光
+          - button "電阻 保護小燈" [ref=f2e35] [cursor=pointer]:
+            - generic [ref=f2e37]: 電阻
+            - generic [ref=f2e38]: 保護小燈
+          - button "按鈕 撳一下" [ref=f2e39] [cursor=pointer]:
+            - generic [ref=f2e41]: 按鈕
+            - generic [ref=f2e42]: 撳一下
+          - button "蜂鳴器 會發聲" [ref=f2e43] [cursor=pointer]:
+            - generic [ref=f2e45]: 蜂鳴器
+            - generic [ref=f2e46]: 會發聲
+          - button "電池 供電" [ref=f2e47] [cursor=pointer]:
+            - generic [ref=f2e49]: 電池
+            - generic [ref=f2e50]: 供電
+          - button "三隻腳 接出去" [ref=f2e51] [cursor=pointer]:
+            - generic [ref=f2e53]: 三隻腳
+            - generic [ref=f2e54]: 接出去
+          - button "四隻腳 接出去" [ref=f2e55] [cursor=pointer]:
+            - generic [ref=f2e57]: 四隻腳
+            - generic [ref=f2e58]: 接出去
+          - button "micro:bit 金手指插口，不用焊接" [ref=f2e59] [cursor=pointer]:
+            - generic [ref=f2e61]: micro:bit
+            - generic [ref=f2e62]: 金手指插口，不用焊接
+          - button "UNO 插上去，塊板變 shield" [ref=f2e63] [cursor=pointer]:
+            - generic [ref=f2e65]: UNO
+            - generic [ref=f2e66]: 插上去，塊板變 shield
+          - button "螺絲孔 鎖實塊板" [ref=f2e67] [cursor=pointer]:
+            - generic [ref=f2e69]: 螺絲孔
+            - generic [ref=f2e70]: 鎖實塊板
+        - button "加四角鎖孔" [ref=f2e71] [cursor=pointer]
+      - main [ref=f2e72]:
+        - generic "電路板立體圖" [ref=f2e73]
+        - generic [aria-hidden]:
+          - generic: 1 拖圖上板
+          - generic: 2 點兩個腳
+          - generic: 3 睇立體
+          - generic: 4 下載
+        - generic [ref=f2e74]:
+          - button "平面" [ref=f2e75] [cursor=pointer]
+          - button "立體" [pressed] [ref=f2e76] [cursor=pointer]
+          - button "正面" [ref=f2e77] [cursor=pointer]
+          - button "縮小" [ref=f2e78] [cursor=pointer]: −
+          - button "放大" [ref=f2e79] [cursor=pointer]: +
+          - button "合板" [ref=f2e80] [cursor=pointer]
+      - complementary [ref=f2e81]:
+        - tablist [ref=f2e82]:
+          - tab "接線" [selected] [ref=f2e83] [cursor=pointer]
+          - tab "檢查" [ref=f2e84] [cursor=pointer]
+          - tab "落單" [ref=f2e85] [cursor=pointer]
+        - generic [ref=f2e86]:
+          - paragraph [ref=f2e87]: 深金色是底層，可以在頂層下面走過。交叉不一定是短路。
+          - generic [ref=f2e88]:
+            - generic [ref=f2e89]:
+              - textbox "線路名稱" [ref=f2e90]: UNO D12
+              - generic [ref=f2e91]: U1·D12 R1·1
+            - button "拆開" [ref=f2e92] [cursor=pointer]
+          - generic [ref=f2e93]:
+            - generic [ref=f2e94]:
+              - textbox "線路名稱" [ref=f2e95]: 燈的正極
+              - generic [ref=f2e96]: R1·2 D1·A
+            - button "拆開" [ref=f2e97] [cursor=pointer]
+          - generic [ref=f2e98]:
+            - generic [ref=f2e99]:
+              - textbox "線路名稱" [ref=f2e100]: 接地
+              - generic [ref=f2e101]: D1·K U1·GND
+            - button "拆開" [ref=f2e102] [cursor=pointer]
+    - contentinfo [ref=f2e103]:
+      - generic [ref=f2e104]: 拖來轉一轉。要改圖先按平面。正面會望落塊板上面。
+  - status
