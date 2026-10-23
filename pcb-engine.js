@@ -1428,6 +1428,7 @@
     outlineLoops: outlineLoops,
     groupsInNet: groupsInNet,
     netOf: netOf,
+    partRects: partRects,
     route: route,
     check: check,
     sanitize: sanitize,

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TinkerPCB</title>
+<link rel="icon" href="data:,">
 <!--
   Design Read: Operate tool for secondary STEM students, workshop bench,
   Cloof ink on paper with one amber accent. Dials 4 / 3 / 6.
@@ -253,6 +254,9 @@
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   @media (prefers-reduced-motion: reduce) {
     button, #toast { transition: none; }
+  }
+  @media (max-width: 1199px) {
+    .legend { display: none; }
   }
   @media (max-width: 800px) {
     body, .app { height: auto; min-height: 100dvh; overflow: auto; }
@@ -877,11 +881,17 @@
   function fits(type, x, y, ignore, rot) {
     var ghost = { type: type, x: x, y: y, rot: rot || 0 };
     var box = PCB.bodyBox(ghost);
-    if (box.x < 0 || box.y < 0 || box.x + box.w > doc.w || box.y + box.h > doc.h) return false;
+    if (box.x < -0.02 || box.y < -0.02 || box.x + box.w > doc.w + 0.02 || box.y + box.h > doc.h + 0.02) return false;
+    var ghostRects = PCB.partRects(ghost);
     for (var i = 0; i < doc.parts.length; i++) {
       if (doc.parts[i].uid === ignore) continue;
-      var b = PCB.bodyBox(doc.parts[i]);
-      if (box.x < b.x + b.w && box.x + box.w > b.x && box.y < b.y + b.h && box.y + box.h > b.y) return false;
+      var rects = PCB.partRects(doc.parts[i]);
+      for (var a = 0; a < ghostRects.length; a++) {
+        for (var j = 0; j < rects.length; j++) {
+          var b = rects[j];
+          if (ghostRects[a].x < b.x + b.w && ghostRects[a].x + ghostRects[a].w > b.x && ghostRects[a].y < b.y + b.h && ghostRects[a].y + ghostRects[a].h > b.y) return false;
+        }
+      }
     }
     return true;
   }
@@ -1084,6 +1094,12 @@
 
   function resize() {
     var r = canvas.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) {
+      /* the 2D canvas is hidden (3D mode): do NOT shrink its buffer to 1×1,
+         that was the "flat view turns into one grey/green/white slab" bug */
+      resize3D();
+      return;
+    }
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.max(1, Math.floor(r.width * dpr));
     canvas.height = Math.max(1, Math.floor(r.height * dpr));
@@ -1367,7 +1383,6 @@ var mainEl = document.querySelector("main");
     }
   }
   function drawInner() {
-    var r = canvas.getBoundingClientRect();
     mainEl.classList.toggle("is-3d", mode === "3d");
     if (mode === "3d") {
       boot3D();
@@ -1383,7 +1398,19 @@ var mainEl = document.querySelector("main");
       setStatus(t("orbit"));
       return;
     }
-    ctx.setTransform(canvas.width / r.width, 0, 0, canvas.height / r.height, 0, 0);
+    /* 2D path: the canvas just became visible — self-heal its buffer to
+       match the real rect, else a stale/1×1 buffer paints one blank slab */
+    var r = canvas.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var want = Math.max(1, Math.floor(r.width * dpr));
+    var wantH = Math.max(1, Math.floor(r.height * dpr));
+    if (canvas.width !== want || canvas.height !== wantH) {
+      canvas.width = want;
+      canvas.height = wantH;
+      fit();
+    }
+    ctx.setTransform(want / r.width, 0, 0, wantH / r.height, 0, 0);
     ctx.clearRect(0, 0, r.width, r.height);
     ctx.fillStyle = "#d4cfc6";
     ctx.fillRect(0, 0, r.width, r.height);
