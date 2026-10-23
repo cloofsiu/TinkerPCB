@@ -236,7 +236,11 @@
     color: var(--muted);
     font-size: 12px;
     font-family: var(--mono);
+    align-items: center;
   }
+  .brand-link { display: inline-flex; align-items: center; flex: none; opacity: 0.82; }
+  .brand-link:hover { opacity: 1; }
+  .brand-link img { height: 14px; width: auto; display: block; }
   #toast {
     position: fixed;
     left: 50%;
@@ -339,6 +343,9 @@
   <footer>
     <span id="status" data-i18n="statusStart">先拖一個圖上板</span>
     <span id="coord"></span>
+    <a class="brand-link" href="https://cv.cloofsiu.com" target="_blank" rel="noopener" title="Cloof Siu — cv.cloofsiu.com">
+      <img src="cloof-logo.png" alt="CLOOF SIU" width="96" height="18">
+    </a>
   </footer>
 </div>
 <div id="toast" role="status"></div>
