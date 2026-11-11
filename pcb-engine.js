@@ -415,13 +415,18 @@
     } else if (na) net = na;
     else if (nb) net = nb;
     else {
-      net = { id: "n" + doc.seq++, name: "線路 " + doc.nets.length + 1, pins: [] };
+      net = { id: "n" + doc.seq++, name: "線路 " + (doc.nets.length + 1), pins: [] };
       doc.nets.push(net);
     }
     addPins(net, a, pad1);
     addPins(net, b, pad2);
     doc.routes = [];
     return net;
+  }
+
+  function removeNet(doc, id) {
+    doc.nets = doc.nets.filter(function (n) { return n.id !== id; });
+    doc.routes = [];
   }
 
   function disconnectPin(doc, uid, padId) {
@@ -437,7 +442,12 @@
   }
 
   function removePart(doc, uid) {
+    var removed = findPart(doc, uid);
     doc.parts = doc.parts.filter(function (p) { return p.uid !== uid; });
+    if (removed && removed.type === "uno" && !doc.parts.some(function (p) { return p.type === "uno"; })) {
+      doc.outline = "rect";
+      doc.sigY = null;
+    }
     doc.nets.forEach(function (n) {
       n.pins = n.pins.filter(function (p) { return p.uid !== uid; });
     });
@@ -573,8 +583,8 @@
       pads.forEach(function (p) {
         cellsIn(p.x, p.y, p.dia / 2 - 0.02, gw, gh).forEach(function (idx) {
           own[idx] = 1;
-          goals[idx] = 1;
           if (intoStart) starts.push(idx);
+          else goals[idx] = 1;
         });
       });
     }
@@ -764,7 +774,7 @@
             groups[li].pads.forEach(function (a) {
               groups[pi].pads.forEach(function (b) {
                 var d = dist(a.x, a.y, b.x, b.y);
-                if (!best || d < best.d) best = { d: d, li: li, pi: pi };
+                if (!best || d < best.d) best = { d: d, li: li, pi: pi, ax: a.x, ay: a.y, bx: b.x, by: b.y };
               });
             });
           });
@@ -786,7 +796,9 @@
           doc.unrouted.push({
             netId: net.id,
             from: groups[best.li].ref + " " + groups[best.li].label,
-            to: groups[best.pi].ref + " " + groups[best.pi].label
+            to: groups[best.pi].ref + " " + groups[best.pi].label,
+            fromPt: [r2(best.ax), r2(best.ay)],
+            toPt: [r2(best.bx), r2(best.by)]
           });
           pending = pending.filter(function (p) { return p !== best.pi; });
           continue;
@@ -931,9 +943,34 @@
     return { strokes: strokes, width: cursor - x };
   }
 
+  var DEFAULT_ASCII = {
+    "LED 小燈": "LED LIGHT",
+    "排針小燈": "PIN LIGHT",
+    "micro:bit 小燈": "MICROBIT LIGHT",
+    "UNO 小燈": "UNO LIGHT",
+    "我的電路板": "MY PCB"
+  };
+
   function asciiName(name) {
-    var s = String(name || "").toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+    var raw = DEFAULT_ASCII[name] || String(name || "");
+    var s = raw.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").trim();
     return s.slice(0, 16) || "BOARD";
+  }
+
+  function simplifyPts(pts) {
+    if (!pts || pts.length <= 2) return pts ? pts.slice() : [];
+    var out = [pts[0]];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var a = out[out.length - 1], b = pts[i], c = pts[i + 1];
+      var dx1 = b[0] - a[0], dy1 = b[1] - a[1];
+      var dx2 = c[0] - b[0], dy2 = c[1] - b[1];
+      var cross = Math.abs(dx1 * dy2 - dy1 * dx2);
+      var dot = dx1 * dx2 + dy1 * dy2;
+      if (cross < 1e-5 && dot >= 0) continue;
+      out.push(b);
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
   }
 
   function gnum(mm) {
@@ -1016,7 +1053,7 @@
     (doc.routes || []).forEach(function (r) {
       (r.segs || []).forEach(function (seg) {
         if (seg.layer !== layer) return;
-        var d = drawChain(traceAp, seg.pts);
+        var d = drawChain(traceAp, simplifyPts(seg.pts));
         if (d) body.push(d);
       });
     });
@@ -1116,6 +1153,16 @@
               if (ty < 0.6 || ty > doc.h - 1.4) return;
               strokeText(net, mx - 1.1, ty, 0.8).strokes.forEach(line);
             });
+          } else {
+            var dirX = part.rot === 270 ? 1 : -1;
+            ["GND", "3V", "P2", "P1", "P0"].forEach(function (net) {
+              var gp = worldPads(part).filter(function (p) { return p.group === net; });
+              if (!gp.length) return;
+              var my = gp.reduce(function (s, p) { return s + p.y; }, 0) / gp.length;
+              var tx = part.x + dirX * 6.6 - (dirX < 0 ? 1.8 : 0);
+              if (tx < 0.6 || tx > doc.w - 2.4) return;
+              strokeText(net, tx, my - 0.4, 0.8).strokes.forEach(line);
+            });
           }
         } else if (spec.draw.kind === "hole") {
           var hpts = [];
@@ -1139,9 +1186,10 @@
           strokeText("+", mx, my, 1.0).strokes.forEach(line);
         });
       });
-      var edgeR = doc.outline === "uno" ? 66.04 : doc.w;
+      var edgeR = doc.outline === "uno" ? 58.0 : doc.w;
+      var titleX = doc.outline === "uno" ? 4.0 : 1.2;
       var titleY = doc.sigTop ? doc.h - 2.2 : (doc.sigY != null ? doc.sigY : 1.0);
-      var title = strokeText(asciiName(doc.name), 1.2, titleY, 1.2);
+      var title = strokeText(asciiName(doc.name), titleX, titleY, 1.2);
       title.strokes.forEach(line);
       if (doc.sig) {
         var sigW = strokeText("CLOOF SIU", 0, 0, 1.2).width;
@@ -1344,7 +1392,7 @@
       doc.w = 68.58;
       doc.h = 53.34;
       doc.sig = 1;
-      doc.sigY = 46.3;
+      doc.sigY = 41.2;
       var un = addPart(doc, "uno", 0, 0);
       un.x = 0;
       un.y = 0;
@@ -1375,6 +1423,7 @@
     out.seq = Number(doc.seq) || 1;
     out.sig = doc.sig ? 1 : 0;
     out.sigTop = doc.sigTop ? 1 : 0;
+    if (typeof doc.sigY === "number" && isFinite(doc.sigY)) out.sigY = r2(doc.sigY);
     var alive = {};
     doc.parts.forEach(function (p) {
       if (!p || !p.uid || !partById(p.type)) return;
@@ -1389,6 +1438,15 @@
         value: String(p.value || "")
       });
     });
+    var hasUno = out.parts.some(function (p) { return p.type === "uno"; });
+    if (hasUno) {
+      out.outline = "uno";
+      out.w = 68.58;
+      out.h = 53.34;
+      if (out.sigY == null || out.sigY > 43) out.sigY = 41.2;
+    } else if (out.outline === "uno") {
+      out.outline = "rect";
+    }
     doc.nets.forEach(function (n) {
       if (!n || !Array.isArray(n.pins)) return;
       var net = { id: String(n.id), name: String(n.name || "線路"), pins: [] };
@@ -1422,7 +1480,9 @@
     findPart: findPart,
     worldPads: worldPads,
     bodyBox: bodyBox,
+    siblings: siblings,
     connect: connect,
+    removeNet: removeNet,
     disconnectPin: disconnectPin,
     removePart: removePart,
     rotatePart: rotatePart,
@@ -1435,6 +1495,7 @@
     groupsInNet: groupsInNet,
     netOf: netOf,
     partRects: partRects,
+    simplifyPts: simplifyPts,
     route: route,
     check: check,
     sanitize: sanitize,

@@ -30,7 +30,6 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body {
-    height: 100vh;
     height: 100dvh;
     overflow: hidden;
     background: var(--paper);
@@ -69,7 +68,6 @@
   }
   input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .app {
-    height: 100vh;
     height: 100dvh;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
@@ -142,11 +140,24 @@
     color: var(--ink);
     border-radius: 999px;
     padding: 5px 10px;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 140ms var(--ease), box-shadow 140ms var(--ease);
   }
+  .coach span:active { transform: scale(0.96); }
   .coach span:nth-child(1) { background: #ffe3b8; }
   .coach span:nth-child(2) { background: #d7f3df; }
   .coach span:nth-child(3) { background: #d7e6ff; }
   .coach span:nth-child(4) { background: #f6d7ea; }
+  .sel-card {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: #fffdf8;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+  }
+  .sel-card h2 { margin: 0 0 8px; }
   .templates { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
   main { position: relative; background: #d4cfc6; overflow: hidden; }
   main.is-3d .legend,
@@ -307,10 +318,10 @@
       <canvas id="board" tabindex="0" aria-label="電路板"></canvas>
       <canvas id="board3d" aria-label="電路板立體圖"></canvas>
       <div class="coach" aria-hidden="true">
-        <span data-i18n="step1">1 拖圖上板</span>
-        <span data-i18n="step2">2 點兩個腳</span>
-        <span data-i18n="step3">3 睇立體</span>
-        <span data-i18n="step4">4 下載</span>
+        <span id="coach-1" data-i18n="step1">1 拖圖上板</span>
+        <span id="coach-2" data-i18n="step2">2 點兩個腳</span>
+        <span id="coach-3" data-i18n="step3">3 睇立體</span>
+        <span id="coach-4" data-i18n="step4">4 下載</span>
       </div>
       <p class="hint" id="hint"></p>
       <div class="canvas-tools">
@@ -330,6 +341,7 @@
       </div>
     </main>
     <aside class="spec">
+      <div id="sel-box" hidden></div>
       <div class="tabs" role="tablist">
         <button type="button" id="tab-net" role="tab" aria-selected="true" data-i18n="tabNet">接線</button>
         <button type="button" id="tab-drc" role="tab" aria-selected="false" data-i18n="tabCheck">檢查</button>
@@ -343,7 +355,7 @@
   <footer>
     <span id="status" data-i18n="statusStart">先拖一個圖上板</span>
     <span id="coord"></span>
-    <a class="brand-link" href="https://cv.cloofsiu.com" target="_blank" rel="noopener" title="Cloof Siu — cv.cloofsiu.com">
+    <a class="brand-link" href="https://cv.cloofsiu.com" target="_blank" rel="noopener" title="Cloof Siu · cv.cloofsiu.com">
       <img src="cloof-logo.png" alt="CLOOF SIU" width="96" height="18">
     </a>
   </footer>
@@ -464,8 +476,17 @@
     "接地": "Ground"
   };
   function showNet(name) {
-    if (lang === "en" && NET_EN[name]) return NET_EN[name];
+    if (lang === "en") {
+      if (NET_EN[name]) return NET_EN[name];
+      var m = String(name || "").match(/^線路\s*(\d+)$/);
+      if (m) return "Wire " + m[1];
+    }
     return name;
+  }
+  function partTitle(spec) {
+    if (!spec) return "";
+    if (lang === "en" && STR["nick_" + spec.id]) return t("nick_" + spec.id);
+    return spec.name;
   }
   function t(key) {
     var row = STR[key];
@@ -514,7 +535,9 @@
       sun.shadow.camera.far = 420;
       var fill = new T3.DirectionalLight(0xfff0d8, 0.55);
       fill.position.set(-90, 70, -70);
-      scene.add(hemi, sun, fill);
+      var under = new T3.DirectionalLight(0xffe9c8, 0.72);
+      under.position.set(-60, -110, -50);
+      scene.add(hemi, sun, fill, under);
       var group = new T3.Group();
       scene.add(group);
       three3d = { renderer: renderer, scene: scene, camera: camera, controls: controls, group: group };
@@ -565,7 +588,9 @@
       green: std(0x2ab056, 0.4),
       yellow: std(0xffd640, 0.4),
       coin: std(0xd4a834, 0.35, 0.7),
-      plusRed: std(0xc42828, 0.5)
+      plusRed: std(0xc42828, 0.5),
+      ubMat: new T3.MeshStandardMaterial({ color: 0x24487a, roughness: 0.6, transparent: true, opacity: 0.82 }),
+      unoMat: new T3.MeshStandardMaterial({ color: 0x00768a, roughness: 0.55 })
     };
     return MATS;
   }
@@ -616,7 +641,13 @@
     while (g.children.length) {
       var c = g.children[0];
       g.remove(c);
-      c.traverse(function (o) { if (o.geometry) o.geometry.dispose(); });
+      c.traverse(function (o) {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material && o.material._transient) {
+          if (o.material.map) o.material.map.dispose();
+          o.material.dispose();
+        }
+      });
     }
     var w = doc.w, h = doc.h;
     var top = doc.mask === "black" ? M.maskBlack : doc.mask === "white" ? M.maskWhite : M.maskGreen;
@@ -633,28 +664,29 @@
     var sg = silkCv.getContext("2d");
     sg.fillStyle = "#f4f1ea";
     sg.font = "600 30px " + getComputedStyle(document.body).fontFamily;
-    sg.fillText(doc.name || "", 12, 40);
+    var titleX3 = doc.outline === "uno" ? 4.0 : 1.2;
+    sg.fillText(doc.name || "", titleX3 * 20, 40);
     if (doc.sig) {
       sg.textAlign = "right";
-      sg.fillText("CLOOF SIU", (doc.outline === "uno" ? 66.04 : w) * 20 - 12, 40);
+      sg.fillText("CLOOF SIU", (doc.outline === "uno" ? 58.0 : w) * 20 - 12, 40);
       sg.textAlign = "start";
     }
-    var silkPlane = new T3.Mesh(
-      new T3.PlaneGeometry(w, 3.2),
-      new T3.MeshBasicMaterial({ map: new T3.CanvasTexture(silkCv), transparent: true })
-    );
+    var silkMat = new T3.MeshBasicMaterial({ map: new T3.CanvasTexture(silkCv), transparent: true });
+    silkMat._transient = true;
+    var silkPlane = new T3.Mesh(new T3.PlaneGeometry(w, 3.2), silkMat);
     silkPlane.rotation.x = -Math.PI / 2;
     var silkDocY = doc.sigTop ? doc.h - 1.6 : (doc.sigY != null ? doc.sigY + 0.6 : 1.6);
-    silkPlane.position.set(w / 2, 0.87, h - silkDocY);
+    silkPlane.position.set(w / 2, 0.08, h - silkDocY);
     g.add(silkPlane);
 
     (doc.routes || []).forEach(function (r) {
       (r.segs || []).forEach(function (seg) {
         if (!seg.pts || seg.pts.length < 2) return;
+        var pts = PCB.simplifyPts ? PCB.simplifyPts(seg.pts) : seg.pts;
         var y = seg.layer === 0 ? 0.075 : -1.675;
         var mat = seg.layer === 0 ? M.copperT : M.copperB;
-        for (var i = 1; i < seg.pts.length; i++) {
-          var a = seg.pts[i - 1], b = seg.pts[i];
+        for (var i = 1; i < pts.length; i++) {
+          var a = pts[i - 1], b = pts[i];
           var ax = a[0], az = h - a[1], bx = b[0], bz = h - b[1];
           var dx = bx - ax, dz = bz - az;
           var len = Math.hypot(dx, dz);
@@ -726,8 +758,7 @@
         }
       } else if (part.type === "ubit") {
         var ubGeo = new T3.ExtrudeGeometry(roundedShape(51.6, 42, 1.5), { depth: 1.9, bevelEnabled: false });
-        var ubMat = new T3.MeshStandardMaterial({ color: 0x24487a, roughness: 0.6, transparent: true, opacity: 0.82 });
-        var ub = new T3.Mesh(ubGeo, ubMat);
+        var ub = new T3.Mesh(ubGeo, M.ubMat);
         ub.rotation.x = -Math.PI / 2;
         ub.position.set(0, 2.85, 0);
         ub.castShadow = true;
@@ -744,11 +775,10 @@
            own frame (connectors on the LEFT band, y = Fab-layer truth:
            USB centre (1.535, 38.10), barrel (5.065, 7.80)). G already
            carries z = doc.h - part.y, so slab/connector local z must be
-           -y_fp — an extra doc.h here pushed the whole UNO one board
+           -y_fp; an extra doc.h here pushed the whole UNO one board
            length out of alignment. Flip under to see the UNO board. */
         var unoGeo = new T3.ExtrudeGeometry(shapeFromLoop(PCB.outlineLoops({ outline: "uno", w: 68.58, h: 53.34 })[0]), { depth: 1.7, bevelEnabled: false });
-        var unoMat = new T3.MeshStandardMaterial({ color: 0x00768a, roughness: 0.55 });
-        var unoSlab = new T3.Mesh(unoGeo, unoMat);
+        var unoSlab = new T3.Mesh(unoGeo, M.unoMat);
         unoSlab.rotation.x = -Math.PI / 2;
         unoSlab.position.set(0, -11.8, 0);
         unoSlab.castShadow = true;
@@ -758,8 +788,8 @@
         G.add(box(24.86, 8.5, 2.4, M.blackP, 30.226, -5.85, -50.8));
         G.add(box(19.78, 8.5, 2.4, M.blackP, 54.61, -5.85, -50.8));
         G.add(box(4.7, 8.5, 7.2, M.blackP, 64.9, -5.85, -27.94));
-        G.add(box(15.75, 2.6, 11.81, M.silver, 1.535, -8.8, -38.0986));
-        G.add(box(13.49, 3.2, 8.99, M.blackP, 5.065, -8.5, -7.7981));
+        G.add(box(15.75, 6.5, 11.81, M.silver, 1.535, -6.85, -38.0986));
+        G.add(box(13.49, 7.5, 8.99, M.blackP, 5.065, -6.35, -7.7981));
       }
       g.add(G);
     });
@@ -808,6 +838,20 @@
     three3d.controls.update();
   }
 
+  var NAME_PAIRS = [
+    ["LED 小燈", "LED Light"],
+    ["排針小燈", "Pin Light"],
+    ["micro:bit 小燈", "micro:bit Light"],
+    ["UNO 小燈", "UNO Light"],
+    ["我的電路板", "My PCB"]
+  ];
+  function syncDefaultName() {
+    if (!doc) return;
+    NAME_PAIRS.forEach(function (pair) {
+      if (lang === "en" && doc.name === pair[0]) doc.name = pair[1];
+      else if (lang !== "en" && doc.name === pair[1]) doc.name = pair[0];
+    });
+  }
   function applyLang() {
     document.documentElement.lang = lang === "en" ? "en" : "zh-Hant";
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
@@ -817,6 +861,11 @@
     langBtn.textContent = lang === "en" ? "中文" : "English";
     langBtn.setAttribute("aria-pressed", lang === "en" ? "true" : "false");
     try { localStorage.setItem("tinkerpcb-lang", lang); } catch (e) {}
+    if (doc) {
+      syncDefaultName();
+      lastKey = "";
+      syncHead();
+    }
     if (typeof buildLib === "function") {
       document.getElementById("lib").textContent = "";
       buildLib();
@@ -836,7 +885,7 @@
   });
 
   var modeParam = location.search.indexOf("mode=flat") >= 0;
-  var doc, undo = [], selected = null, wire = null, layer = "all", mode = modeParam ? "flat" : "3d", cam = null;
+  var doc, undo = [], selected = null, wire = null, hoverPad = null, cursorPt = null, layer = "all", mode = modeParam ? "flat" : "3d", cam = null;
   var view = { zoom: 1, panX: 0, panY: 0, s: 8, ox: 20, oy: 20 };
   var drag = null;
   var canvas = document.getElementById("board");
@@ -860,6 +909,7 @@
   }
   function loadDoc(next) {
     doc = next;
+    syncDefaultName();
     selected = null;
     wire = null;
     view.zoom = 1;
@@ -1049,11 +1099,14 @@
       btn.addEventListener("pointerdown", function (e) {
         if (e.button !== 0) return;
         drag = { kind: "lib", type: p.id, x: e.clientX, y: e.clientY, moved: false, pid: e.pointerId };
-        btn.setPointerCapture(e.pointerId);
+        try { btn.setPointerCapture(e.pointerId); } catch (err) {}
       });
       btn.addEventListener("pointermove", function (e) {
         if (!drag || drag.kind !== "lib" || drag.pid !== e.pointerId) return;
-        if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 5) drag.moved = true;
+        if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 5) {
+          drag.moved = true;
+          if (mode === "3d") setMode("flat");
+        }
         drag.cx = e.clientX;
         drag.cy = e.clientY;
         draw();
@@ -1073,6 +1126,7 @@
               var p = PCB.addPart(doc, type, d0.x, d0.y);
               p.rot = d0.rot;
             });
+            syncHead();
             return;
           }
           var spot = freeSpot(type);
@@ -1091,6 +1145,7 @@
             var p = PCB.addPart(doc, type, d1.x, d1.y);
             p.rot = d1.rot;
           });
+          syncHead();
           return;
         }
         if (!fits(type, x, y)) { setStatus(t("noFit")); draw(); return; }
@@ -1136,7 +1191,7 @@
     return { x: (px - view.ox) / view.s, y: doc.h - (py - view.oy) / view.s };
   }
 
-  function hitPad(x, y) {
+    function hitPad(x, y) {
     var best = null, bestD = 14;
     doc.parts.forEach(function (part) {
       if (PCB.partById(part.type).mechanical) return;
@@ -1144,7 +1199,7 @@
         var c = b2c(p.x, p.y);
         var d = Math.hypot(x - c[0], y - c[1]);
         var lim = Math.max(12, (p.dia / 2) * view.s + 6);
-        if (d < lim && d < bestD) { bestD = d; best = { uid: part.uid, pad: p.id, label: p.label, ref: part.ref }; }
+        if (d < lim && d < bestD) { bestD = d; best = { uid: part.uid, pad: p.id, label: p.label, ref: part.ref, x: p.x, y: p.y }; }
       });
     });
     return best;
@@ -1323,20 +1378,39 @@
       var ey = edgeAll.reduce(function (a, p) { return a + p.y; }, 0) / edgeAll.length;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      var sign = (cy - ey) >= 0 ? 1 : -1;
-      Object.keys(groups).forEach(function (gk) {
-        var ps = groups[gk];
-        var px = ps.reduce(function (a, p) { return a + p.x; }, 0) / ps.length;
-        var c = b2c(px, ey + sign * 7);
-        ctx.fillStyle = "#f4f1ea";
-        ctx.font = Math.max(7, 1.8 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
-        ctx.fillText(gk, c[0], c[1]);
-      });
-      if (edgeAll.length) {
-        var tc = b2c(cx, ey + sign * 11.5);
-        ctx.fillStyle = "#f4f1ea";
-        ctx.font = Math.max(9, 2.6 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
-        ctx.fillText("micro:bit", tc[0], tc[1]);
+      var vertEdge = part.rot === 90 || part.rot === 270;
+      if (vertEdge) {
+        var signX = (cx - ex) >= 0 ? 1 : -1;
+        Object.keys(groups).forEach(function (gk) {
+          var ps = groups[gk];
+          var py = ps.reduce(function (a, p) { return a + p.y; }, 0) / ps.length;
+          var c = b2c(ex + signX * 7.2, py);
+          ctx.fillStyle = "#f4f1ea";
+          ctx.font = Math.max(7, 1.8 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText(gk, c[0], c[1]);
+        });
+        if (edgeAll.length) {
+          var tcV = b2c(ex + signX * 14, cy);
+          ctx.fillStyle = "#f4f1ea";
+          ctx.font = Math.max(9, 2.6 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText("micro:bit", tcV[0], tcV[1]);
+        }
+      } else {
+        var sign = (cy - ey) >= 0 ? 1 : -1;
+        Object.keys(groups).forEach(function (gk) {
+          var ps = groups[gk];
+          var px = ps.reduce(function (a, p) { return a + p.x; }, 0) / ps.length;
+          var c = b2c(px, ey + sign * 7);
+          ctx.fillStyle = "#f4f1ea";
+          ctx.font = Math.max(7, 1.8 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText(gk, c[0], c[1]);
+        });
+        if (edgeAll.length) {
+          var tc = b2c(cx, ey + sign * 11.5);
+          ctx.fillStyle = "#f4f1ea";
+          ctx.font = Math.max(9, 2.6 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText("micro:bit", tc[0], tc[1]);
+        }
       }
       ctx.textAlign = "start";
       ctx.textBaseline = "alphabetic";
@@ -1408,8 +1482,8 @@ var mainEl = document.querySelector("main");
       setStatus(t("orbit"));
       return;
     }
-    /* 2D path: the canvas just became visible — self-heal its buffer to
-       match the real rect, else a stale/1×1 buffer paints one blank slab */
+    /* 2D path: the canvas just became visible, so self-heal its buffer to
+       match the real rect, else a stale/1x1 buffer paints one blank slab */
     var r = canvas.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) return;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1442,7 +1516,7 @@ var mainEl = document.querySelector("main");
     ctx.stroke();
     ctx.save();
     ctx.clip();
-    /* grid: dark on green/white masks, light on black — must be visible */
+    /* grid: dark on green/white masks, light on black so it stays visible */
     var gridCol = doc.mask === "black" ? "rgba(255,255,255,0.12)" : doc.mask === "white" ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.22)";
     ctx.strokeStyle = gridCol;
     ctx.lineWidth = 1;
@@ -1459,6 +1533,14 @@ var mainEl = document.querySelector("main");
     if (layer !== "1") drawTraces(layer === "all" ? "0" : layer);
     doc.parts.forEach(function (p) { if (!isDock(p)) drawPart(p, false); });
     doc.parts.forEach(function (p) { if (isDock(p)) drawPart(p, false); });
+    var hoverSibs = {};
+    if (hoverPad) {
+      var hPart = PCB.findPart(doc, hoverPad.uid);
+      if (hPart && PCB.siblings) {
+        PCB.siblings(hPart, hoverPad.pad).forEach(function (id) { hoverSibs[hoverPad.uid + ":" + id] = 1; });
+      }
+    }
+    var wirePt = null;
     doc.parts.forEach(function (part) {
       PCB.worldPads(part).forEach(function (p) {
         var c = b2c(p.x, p.y);
@@ -1474,7 +1556,15 @@ var mainEl = document.querySelector("main");
           /* no drill dot in 2D: under a part body it reads as a pupil;
              the drill lives in the gerber and the 3D view */
         }
+        if (hoverSibs[part.uid + ":" + p.id]) {
+          ctx.beginPath();
+          ctx.arc(c[0], c[1], Math.max(6, (p.dia / 2) * view.s + 3), 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(244, 241, 234, 0.9)";
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+        }
         if (wire && wire.uid === part.uid && wire.pad === p.id) {
+          wirePt = c;
           ctx.beginPath();
           ctx.arc(c[0], c[1], Math.max(8, (p.dia / 2) * view.s + 4), 0, Math.PI * 2);
           ctx.strokeStyle = "#c4841d";
@@ -1491,24 +1581,45 @@ var mainEl = document.querySelector("main");
       ctx.strokeText(part.ref, tp[0], tp[1] - 4);
       ctx.fillText(part.ref, tp[0], tp[1] - 4);
     });
+    if (wire && wirePt && cursorPt) {
+      var targetC = hoverPad ? b2c(hoverPad.x, hoverPad.y) : b2c(cursorPt.x, cursorPt.y);
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = "#f2ca62";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(wirePt[0], wirePt[1]);
+      ctx.lineTo(targetC[0], targetC[1]);
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.fillStyle = "#f4f1ea";
     ctx.font = "600 12px " + getComputedStyle(document.body).fontFamily;
-    var sigBase = doc.sigTop ? doc.h - 2.2 : (doc.sigY != null ? doc.sigY + 1.2 : 1.0);
-    var tPos = b2c(1.2, sigBase);
+    var sigBase = doc.sigTop ? doc.h - 2.2 : (doc.sigY != null ? doc.sigY : 1.0);
+    var titleX = doc.outline === "uno" ? 4.0 : 1.2;
+    var tPos = b2c(titleX, sigBase);
     ctx.textAlign = "start";
     ctx.fillText(doc.name || "", tPos[0], tPos[1]);
     if (doc.sig) {
       ctx.textAlign = "right";
-      var edgeR = doc.outline === "uno" ? 66.04 : doc.w;
+      var edgeR = doc.outline === "uno" ? 58.0 : doc.w;
       var sPos = b2c(edgeR - 1.4, sigBase);
       ctx.fillText("CLOOF SIU", sPos[0], sPos[1]);
       ctx.textAlign = "start";
     }
     (doc.unrouted || []).forEach(function (u) {
+      if (!u.fromPt || !u.toPt) return;
+      var ua = b2c(u.fromPt[0], u.fromPt[1]);
+      var ub = b2c(u.toPt[0], u.toPt[1]);
+      ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = "#c4841d";
-      ctx.lineWidth = 1.25;
-      ctx.setLineDash([]);
+      ctx.strokeStyle = "#e05a47";
+      ctx.lineWidth = 1.75;
+      ctx.beginPath();
+      ctx.moveTo(ua[0], ua[1]);
+      ctx.lineTo(ub[0], ub[1]);
+      ctx.stroke();
+      ctx.restore();
     });
     ctx.restore();
     if (drag && drag.kind === "lib" && drag.moved && drag.cx) {
@@ -1561,23 +1672,25 @@ var mainEl = document.querySelector("main");
       cut.textContent = t("split");
       cut.addEventListener("click", function () {
         mutate(function () {
-          var pin = n.pins[0];
-          PCB.disconnectPin(doc, pin.uid, pin.pad);
-          doc.nets = doc.nets.filter(function (x) { return x.id !== n.id; });
+          if (PCB.removeNet) PCB.removeNet(doc, n.id);
+          else doc.nets = doc.nets.filter(function (x) { return x.id !== n.id; });
         });
       });
       row.appendChild(left);
       row.appendChild(cut);
       netHost.appendChild(row);
     });
+    var selHost = document.getElementById("sel-box");
+    selHost.textContent = "";
+    selHost.hidden = true;
     if (selected) {
       var part = PCB.findPart(doc, selected);
       if (part) {
         var spec = PCB.partById(part.type);
         var box = document.createElement("div");
-        box.style.marginTop = "14px";
+        box.className = "sel-card";
         var h = document.createElement("h2");
-        h.textContent = part.ref + "  " + spec.name;
+        h.textContent = part.ref + " · " + partTitle(spec);
         box.appendChild(h);
         if (spec.values) {
           spec.values.forEach(function (v) {
@@ -1606,12 +1719,14 @@ var mainEl = document.querySelector("main");
         del.textContent = t("del");
         del.style.marginLeft = "6px";
         del.addEventListener("click", function () {
-          mutate(function () { PCB.removePart(doc, part.uid); });
           selected = null;
+          mutate(function () { PCB.removePart(doc, part.uid); });
+          syncHead();
         });
         box.appendChild(rot);
         box.appendChild(del);
-        netHost.appendChild(box);
+        selHost.appendChild(box);
+        selHost.hidden = false;
       }
     }
     drcHost.textContent = "";
@@ -1682,7 +1797,7 @@ var mainEl = document.querySelector("main");
     if (mode === "3d") {
       if (three3d) return; /* OrbitControls owns rotation */
       drag = { kind: "orbit", pid: e.pointerId, cx: e.clientX, cy: e.clientY, yaw: cam ? cam.yaw : 0.36, pitch: cam ? cam.pitch : 0.78 };
-      canvas.setPointerCapture(e.pointerId);
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
       return;
     }
     var r = canvas.getBoundingClientRect();
@@ -1708,20 +1823,34 @@ var mainEl = document.querySelector("main");
     if (part) {
       selected = part.uid;
       drag = { kind: "move", uid: part.uid, pid: e.pointerId, bx: part.x, by: part.y, cx: e.clientX, cy: e.clientY, moved: false };
-      canvas.setPointerCapture(e.pointerId);
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
       renderSide();
       draw();
       return;
     }
     selected = null;
     drag = { kind: "pan", pid: e.pointerId, cx: e.clientX, cy: e.clientY, px: view.panX, py: view.panY };
-    canvas.setPointerCapture(e.pointerId);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     renderSide();
     draw();
   });
   canvas.addEventListener("pointermove", function (e) {
     var pt = clientToBoard(e.clientX, e.clientY);
-    document.getElementById("coord").textContent = pt ? (pt.x.toFixed(1) + " , " + pt.y.toFixed(1) + " mm") : "";
+    cursorPt = pt;
+    if (mode === "flat") {
+      var r = canvas.getBoundingClientRect();
+      var hp = hitPad(e.clientX - r.left, e.clientY - r.top);
+      var changed = (hp ? hp.uid + ":" + hp.pad : "") !== (hoverPad ? hoverPad.uid + ":" + hoverPad.pad : "");
+      hoverPad = hp;
+      if (hp) {
+        document.getElementById("coord").textContent = hp.ref + " · " + hp.label + " (" + hp.x.toFixed(1) + ", " + hp.y.toFixed(1) + " mm)";
+      } else {
+        document.getElementById("coord").textContent = pt ? (pt.x.toFixed(1) + " , " + pt.y.toFixed(1) + " mm") : "";
+      }
+      if ((changed || wire) && !drag) draw();
+    } else {
+      document.getElementById("coord").textContent = "";
+    }
     if (!drag || drag.pid !== e.pointerId) return;
     if (drag.kind === "orbit") {
       cam.yaw = drag.yaw + (e.clientX - drag.cx) * 0.008;
@@ -1744,6 +1873,10 @@ var mainEl = document.querySelector("main");
       fit();
       draw();
     }
+  });
+  canvas.addEventListener("pointerleave", function () {
+    cursorPt = null;
+    if (hoverPad) { hoverPad = null; if (mode === "flat") draw(); }
   });
   canvas.addEventListener("pointerup", function (e) {
     if (!drag || drag.pid !== e.pointerId) return;
@@ -1800,6 +1933,19 @@ var mainEl = document.querySelector("main");
       selected = null;
       wire = null;
       mutate(function () { PCB.removePart(doc, uid); });
+      syncHead();
+    }
+    var arrows = { ArrowLeft: [-1.27, 0], ArrowRight: [1.27, 0], ArrowUp: [0, 1.27], ArrowDown: [0, -1.27] };
+    if (arrows[e.key] && selected && mode === "flat") {
+      var sp = PCB.findPart(doc, selected);
+      if (sp && !PCB.partById(sp.type).edge) {
+        e.preventDefault();
+        var nx = PCB.snap(sp.x + arrows[e.key][0]);
+        var ny = PCB.snap(sp.y + arrows[e.key][1]);
+        if (fits(sp.type, nx, ny, sp.uid, sp.rot)) {
+          mutate(function () { PCB.movePart(doc, sp.uid, nx, ny); });
+        }
+      }
     }
     if ((e.metaKey || e.ctrlKey) && e.key === "z") {
       e.preventDefault();
@@ -1953,6 +2099,10 @@ var mainEl = document.querySelector("main");
   document.getElementById("tab-net").addEventListener("click", function () { showTab("net"); });
   document.getElementById("tab-drc").addEventListener("click", function () { showTab("drc"); });
   document.getElementById("tab-fab").addEventListener("click", function () { showTab("fab"); });
+  document.getElementById("coach-1").addEventListener("click", function () { setMode("flat"); });
+  document.getElementById("coach-2").addEventListener("click", function () { setMode("flat"); showTab("net"); });
+  document.getElementById("coach-3").addEventListener("click", function () { setMode("3d"); });
+  document.getElementById("coach-4").addEventListener("click", function () { document.getElementById("download").click(); });
 
   var tplParam = location.search.match(/tpl=(led|header|ubit|uno|blank)/);
   var brokenTest = location.search.indexOf("draft=broken") >= 0;
@@ -1989,12 +2139,15 @@ var mainEl = document.querySelector("main");
     PCB.route(doc);
   }
   if (doc.nets.length && !(doc.routes && doc.routes.length)) PCB.route(doc);
-  syncHead();
+  document.getElementById("view-flat").setAttribute("aria-pressed", mode === "flat" ? "true" : "false");
+  document.getElementById("view-3d").setAttribute("aria-pressed", mode === "3d" ? "true" : "false");
   applyLang();
+  syncHead();
   window.addEventListener("resize", resize);
   requestAnimationFrame(function () { setTimeout(resize, 0); });
   resize();
   if (location.search.indexOf("test=1") >= 0) {
+    if (three3d === null) boot3D();
     document.title = "TINKER " + (three3d ? "three" : "fallback");
   }
 })();

@@ -32,13 +32,21 @@ console.log("zip", zip.length, out);
 var blank = PCB.blank("測試");
 var a = PCB.addPart(blank, "led", 20, 20);
 var b = PCB.addPart(blank, "res", 40, 20);
-PCB.connect(blank, a.uid, "A", b.uid, "1");
+var n1 = PCB.connect(blank, a.uid, "A", b.uid, "1");
+if (n1.name !== "線路 1") { console.log("bad net name:", n1.name); process.exit(1); }
 PCB.route(blank);
 var c = PCB.check(blank);
 if (!c.ok) {
   console.log("manual", JSON.stringify(c.errors));
   process.exit(1);
 }
+var simp = PCB.simplifyPts([[10, 10], [10.5, 10], [11, 10], [11, 10.5], [11, 12]]);
+if (simp.length !== 3) { console.log("simplifyPts failed:", simp); process.exit(1); }
+var unoTmp = PCB.template("uno");
+var unoSan = PCB.sanitize(unoTmp);
+if (unoSan.sigY !== 41.2 || unoSan.outline !== "uno") { console.log("uno sanitize sigY failed:", unoSan.sigY, unoSan.outline); process.exit(1); }
+PCB.removePart(unoSan, unoSan.parts[0].uid);
+if (unoSan.outline !== "rect") { console.log("removePart uno outline not reset:", unoSan.outline); process.exit(1); }
 console.log("manual ok");
 
 var dirty = {

@@ -1,17 +1,69 @@
 # TinkerPCB
 
-未發佈草稿。唔好上傳去 cv.cloofsiu.com，除非 Cloof 話可以。
+**Your first PCB creator · 你的第一個電路板創作器**
 
-開 `index.html` 就用到。右上角 English / 中文 切換。立體圖用 Three.js（WebGL）：可以拖曳旋轉（有阻尼，順滑）、滾輪拉近，仲可以反去板底睇底層銅線。撳「正面」返標準角度，「合板」重新對焦。冇網 / 冇 WebGL 嘅情況會自動轉返軟件渲染版（樣衰啲但用到）。要改零件先按「平面」。同學仔拖直插零件上板，點兩個焊盤接線，工具自動走線，然後下載 JLCPCB 用的 Gerber zip。呢個頁唔代下單，亦唔代付款。立體圖的板邊畫厚少少，方便睇到厚度，落單仍然是 1.6mm。
+[**Live Demo → cloofsiu.github.io/TinkerPCB**](https://cloofsiu.github.io/TinkerPCB/) · [**English Demo (`?lang=en`)**](https://cloofsiu.github.io/TinkerPCB/?lang=en)
 
-而家有的零件：LED 5mm、1/4W 電阻、6×6 輕觸按鈕、12mm 蜂鳴器、20mm 電池座、排針、M3 鎖孔、micro:bit 插口。全部直插，方便手焊。沒有貼片，沒有銅皮，沒有原理圖頁。
+![TinkerPCB micro:bit 3D View](preview/ubit_3d.png)
 
-micro:bit 插口 = 板邊金手指（40 位置 × 1.27mm，對應官方 V2 pinmap：GND 環 6 格、3V 環 6 格、P0/P1/P2 環各 4 格），會自動吸埋去最近嘅板邊，按「旋轉」換邊。金手指由廠鍍金，學生唔使焊；學生只焊自己嘅零件。2D 同立體圖都會畫出 docked 嘅 micro:bit（藍色圓角板 + 5×5 黃點矩陣 + USB 凸位），連接器金手指帶喺板邊都看得到；micro:bit 板身半透明，透到下面嘅接點。地盤限制：micro:bit 蓋住嘅範圍（51.6 × 42mm）唔可以擺零件，DRC 會話你知。
+**TinkerPCB** is a zero-install, single-lesson PCB design tool created for primary and junior-secondary STEM classrooms. Instead of overwhelming beginners with schematic capture, footprint assignment, and complex CAD menus, students go from a blank board to a real, manufacturable 2-layer PCB in four steps:
 
-Arduino UNO 插座 = 塊板會自動變成 UNO shield：外形照官方 R3（68.58 × 53.34，左邊嗰邊 = USB／電源插位邊、左下切角 = 電源插位角，由經核對嘅 KiCad 足跡 silk 線段拆出並鏡像返正面方向 — B.SilkS 係背面層，原檔 bulge 畫咗喺 +x，但足跡自己嘅 SCL/SDA（18.8）同 NC/IOREF（27.9）係最貼近接腳邊嘅 pin，Fab 層亦都將 Barrel Jack（5.07, 7.80）同 USB（1.54, 38.10）放喺 x≈0 嗰邊），釘位照官方 R3：下面一行 8 腳電源 + 6 腳 analog（中間留一格窿位）、上面一行 10+8 腳 digital、右邊 ICSP 2×3、四隻 3.2mm 鎖孔。UNO 插住之後寬高輸入會鎖住（外形由 shield 擁有）。零件可以放喺 UNO 底下（兩排母座之間嘅中間位）；底層線可以喺 UNO 底下過。學生焊三條母座：1×10、1×8、1×8+1×6。立體圖照真實 shield 疊法：UNO 板做底（下面），三條黑色母座條填滿兩塊板之間嘅空隙，USB／電源插頭喺 UNO 自己嘅插位凸出嚟；反去板底就見到成塊 Arduino。
+1. **Drag a part** onto the green board.
+2. **Tap two gold pads** to connect them — the built-in 2-layer auto-router routes the copper traces automatically.
+3. **Inspect in 3D** — orbit smoothly with WebGL (Three.js), flip underneath to inspect bottom-layer copper traces, and preview docked boards.
+4. **Download the factory `.zip`** — exports standard Gerber (`RS-274X`) and Excellon drill files ready for 2-layer PCB fabrication (e.g. JLCPCB standard process).
 
-UNO 同 micro:bit 兩個例子嘅板面右上都會絲印 `CLOOF SIU` 簽名（平面圖、立體圖、Gerber 絲印層三邊都有）。
+| Arduino UNO Shield (3D Stack) | Arduino UNO Shield (2D Layout) |
+| :---: | :---: |
+| ![UNO 3D View](preview/uno_3d.png) | ![UNO 2D View](preview/uno_2d.png) |
 
-線寬 0.30mm，間距 0.20mm，過孔鑽孔 0.6mm，對齊 JLCPCB 常規工藝。底層線可以在頂層下面交叉，過孔零件兩面都有銅。
+---
 
-電池座腳距是 20mm，落單前對一下實物。
+## Classroom-First Features
+
+- **Hand-Solder Through-Hole (THT) Parts Library**
+  - **5mm LED** (Red / Amber / Green), **1/4W Axial Resistor** (`220Ω`, `330Ω`, `470Ω`, `1kΩ`), **6×6mm Tactile Button** (with internal pin-pair continuity modelled automatically), **12mm Passive Buzzer**, **20mm Coin-Cell Holder**, **1×3 & 1×4 2.54mm Pin Headers**, and **M3 Mounting Holes**.
+- **BBC micro:bit Direct Edge Connector**
+  - Generates 40 double-sided gold fingers at `1.27mm` pitch (`1.2 × 5.08mm` pads, no drills) mapped to the official micro:bit V2 schematic (`GND` 6-slot ring, `3V` 6-slot ring, `P0`/`P1`/`P2` 4-slot rings).
+  - Auto-docks to any of the four board edges. The PCB fab manufactures the edge fingers directly — students only solder their own through-hole parts.
+- **Arduino UNO R3 Shield Mode**
+  - Dropping the Arduino UNO socket automatically transforms the board outline and mounting holes into an official Arduino UNO R3 shield (`68.58 × 53.34mm`), complete with Power, Analog, Digital, and ICSP headers.
+- **2-Layer Auto-Router & Design Rule Check (DRC)**
+  - `0.50mm` grid Dijkstra router with `0.30mm` trace width, `0.20mm` clearance, and `0.60mm / 1.10mm` vias.
+  - Real-time DRC checks for out-of-bounds parts, footprint overlaps, pad-to-pad clearance, and unrouted nets (with dashed ratsnest airwires).
+- **Bilingual Interface (`繁體中文` / `English`)**
+  - Toggle between Traditional Chinese and English anytime, or link directly with `?lang=en`.
+  - URL parameters for classroom templates: `?tpl=led`, `?tpl=header`, `?tpl=ubit`, `?tpl=uno`, `?tpl=blank`, and `?mode=flat`.
+
+---
+
+## Running Locally & Testing
+
+No build step or server required — open `index.html` directly in any modern browser, or serve the folder statically:
+
+```bash
+# Run engine & Gerber export test suite
+node test-pcb.js
+```
+
+---
+
+## 課堂簡介（繁體中文）
+
+**TinkerPCB** 專為中小學 STEM 課堂而設，讓學生在一節課內完成人生第一塊真正可以落廠生產的雙層印刷電路板（PCB）：
+
+1. **拖圖上板**：全部採用直插（THT）零件，方便學生親手焊接。
+2. **點兩個腳接線**：內置雙層自動走線引擎（線寬 `0.30mm`、間距 `0.20mm`、過孔鑽孔 `0.60mm`），自動處理頂層／底層走線與過孔。
+3. **立體與平面檢視**：支援 Three.js WebGL 立體預覽，可順滑旋轉並翻到板底檢視底層銅線；無 WebGL 環境亦會自動切換至後備渲染器。
+4. **micro:bit 金手指與 Arduino UNO Shield**：
+   - **micro:bit 插口**：直接於板邊生成 40 格 `1.27mm` 金手指（對齊官方 V2 腳位），由板廠直接成型，學生無須焊接密腳插座。
+   - **Arduino UNO 插座**：自動將電路板外框轉換為官方 R3 Shield 尺寸與腳位。
+5. **一鍵匯出製板檔**：直接下載包含頂底銅層、阻焊層、絲印層、板邊及鑽孔檔的 `.zip`，可直接上傳至 JLCPCB 等板廠預覽及製作。
+
+---
+
+## Author & License
+
+Designed and built by **Cloof Siu (蕭振平)** · [cv.cloofsiu.com](https://cv.cloofsiu.com) · [Instagram @cloofsiu](https://www.instagram.com/cloofsiu/) · [GitHub @cloofsiu](https://github.com/cloofsiu)
+
+Released under the [MIT License](LICENSE).

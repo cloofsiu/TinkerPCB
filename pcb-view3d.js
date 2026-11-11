@@ -161,17 +161,18 @@
     var top = [42, 176, 104];
     if (doc.mask === "black") top = [42, 46, 54];
     if (doc.mask === "white") top = [236, 232, 220];
-    var sides = [
-      { pts: [[0, 0, 0], [doc.w, 0, 0], [doc.w, 0, t], [0, 0, t]], color: mix(side, 1), depth: 0 },
-      { pts: [[doc.w, 0, 0], [doc.w, doc.h, 0], [doc.w, doc.h, t], [doc.w, 0, t]], color: mix(side, 0.82), depth: -doc.h },
-      { pts: [[doc.w, doc.h, 0], [0, doc.h, 0], [0, doc.h, t], [doc.w, doc.h, t]], color: mix(side, 0.7), depth: -doc.h * 2 },
-      { pts: [[0, doc.h, 0], [0, 0, 0], [0, 0, t], [0, doc.h, t]], color: mix(side, 0.9), depth: -doc.h }
-    ];
+    var loop = PCB && PCB.outlineLoops ? PCB.outlineLoops(doc)[0] : [[0, 0], [doc.w, 0], [doc.w, doc.h], [0, doc.h]];
+    var sides = loop.map(function (a, i) {
+      var b = loop[(i + 1) % loop.length];
+      return {
+        pts: [[a[0], a[1], 0], [b[0], b[1], 0], [b[0], b[1], t], [a[0], a[1], t]],
+        color: mix(side, 0.72 + 0.24 * ((i % 2) ? 0.5 : 1)),
+        depth: -(a[1] + b[1])
+      };
+    });
     sides.sort(function (a, b) { return a.depth - b.depth; });
     sides.forEach(function (f) { drawFace(ctx, cam, doc, cx, cy, f); });
-    fill(ctx, [
-      pp(0, 0, t), pp(doc.w, 0, t), pp(doc.w, doc.h, t), pp(0, doc.h, t)
-    ], top);
+    fill(ctx, loop.map(function (pt) { return pp(pt[0], pt[1], t); }), top);
 
     var sample = pp(10, 10, t);
     var sample2 = pp(11, 10, t);
@@ -265,22 +266,22 @@
           var r = rot90(lx, ly, k);
           return [part.x + r[0], part.y + r[1]];
         }
-        var hp = lp(36.83, 2.54);
-        faces = boxFaces(hp[0], hp[1], t, 19.78, 2.4, 8.8, [34, 38, 46], k);
-        var ap = lp(57.15, 2.54);
-        faces = faces.concat(boxFaces(ap[0], ap[1], t, 14.7, 2.4, 8.8, [34, 38, 46], k));
-        var d10 = lp(30.226, 50.8);
-        faces = faces.concat(boxFaces(d10[0], d10[1], t, 24.86, 2.4, 8.8, [34, 38, 46], k));
-        var d8 = lp(54.61, 50.8);
-        faces = faces.concat(boxFaces(d8[0], d8[1], t, 19.78, 2.4, 8.8, [34, 38, 46], k));
-        var ic = lp(64.9, 27.94);
-        faces = faces.concat(boxFaces(ic[0], ic[1], t, 4.7, 7.2, 8.8, [34, 38, 46], k));
         var uc = lp(34.29, 26.67);
-        faces = faces.concat(boxFaces(uc[0], uc[1], t + 8.8, 68.58, 53.34, 1.7, [0, 118, 138], k));
-        var us = lp(3.5, 38);
-        faces = faces.concat(boxFaces(us[0], us[1], t + 10.5, 8, 7, 2.6, [196, 200, 206], k));
-        var bj = lp(4.5, 8);
-        faces = faces.concat(boxFaces(bj[0], bj[1], t + 10.5, 9, 7, 3.2, [30, 30, 32], k));
+        faces = boxFaces(uc[0], uc[1], -10.2, 68.58, 53.34, 1.7, [0, 118, 138], k);
+        var us = lp(1.54, 38.1);
+        faces = faces.concat(boxFaces(us[0], us[1], -8.5, 14, 11, 6.5, [196, 200, 206], k));
+        var bj = lp(5.07, 7.8);
+        faces = faces.concat(boxFaces(bj[0], bj[1], -8.5, 13, 9, 7.5, [30, 30, 32], k));
+        var hp = lp(36.83, 2.54);
+        faces = faces.concat(boxFaces(hp[0], hp[1], -8.5, 19.78, 2.4, 8.5, [34, 38, 46], k));
+        var ap = lp(57.15, 2.54);
+        faces = faces.concat(boxFaces(ap[0], ap[1], -8.5, 14.7, 2.4, 8.5, [34, 38, 46], k));
+        var d10 = lp(30.226, 50.8);
+        faces = faces.concat(boxFaces(d10[0], d10[1], -8.5, 24.86, 2.4, 8.5, [34, 38, 46], k));
+        var d8 = lp(54.61, 50.8);
+        faces = faces.concat(boxFaces(d8[0], d8[1], -8.5, 19.78, 2.4, 8.5, [34, 38, 46], k));
+        var ic = lp(64.9, 27.94);
+        faces = faces.concat(boxFaces(ic[0], ic[1], -8.5, 4.7, 7.2, 8.5, [34, 38, 46], k));
       } else if (part.type === "hdr3" || part.type === "hdr4") {
         var n = part.type === "hdr3" ? 3 : 4;
         faces = boxFaces(part.x, part.y, t + 1.6, 2.6, n * 2.54, 2.8, [32, 36, 44], k);
