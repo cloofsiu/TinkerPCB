@@ -45,8 +45,14 @@ if (simp.length !== 3) { console.log("simplifyPts failed:", simp); process.exit(
 var unoTmp = PCB.template("uno");
 var unoSan = PCB.sanitize(unoTmp);
 if (unoSan.sigY !== 41.2 || unoSan.outline !== "uno") { console.log("uno sanitize sigY failed:", unoSan.sigY, unoSan.outline); process.exit(1); }
+var mechConn = PCB.connect(unoSan, unoSan.parts[0].uid, "M1", unoSan.parts[1].uid, "1");
+if (mechConn !== null) { console.log("mechanical pad should not connect:", mechConn); process.exit(1); }
 PCB.removePart(unoSan, unoSan.parts[0].uid);
 if (unoSan.outline !== "rect") { console.log("removePart uno outline not reset:", unoSan.outline); process.exit(1); }
+["ldr", "ssw", "pot", "cap", "srv"].forEach(function (tp) {
+  var sp = PCB.partById(tp);
+  if (!sp || !sp.pads || !sp.pads.length) { console.log("missing new part:", tp); process.exit(1); }
+});
 console.log("manual ok");
 
 var dirty = {

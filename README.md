@@ -21,13 +21,13 @@
 
 ## Classroom-First Features
 
-- **Hand-Solder Through-Hole (THT) Parts Library**
-  - **5mm LED** (Red / Amber / Green), **1/4W Axial Resistor** (`220Ω`, `330Ω`, `470Ω`, `1kΩ`), **6×6mm Tactile Button** (with internal pin-pair continuity modelled automatically), **12mm Passive Buzzer**, **20mm Coin-Cell Holder**, **1×3 & 1×4 2.54mm Pin Headers**, and **M3 Mounting Holes**.
-- **BBC micro:bit Direct Edge Connector**
-  - Generates 40 double-sided gold fingers at `1.27mm` pitch (`1.2 × 5.08mm` pads, no drills) mapped to the official micro:bit V2 schematic (`GND` 6-slot ring, `3V` 6-slot ring, `P0`/`P1`/`P2` 4-slot rings).
-  - Auto-docks to any of the four board edges. The PCB fab manufactures the edge fingers directly — students only solder their own through-hole parts.
+- **15 Hand-Solder Through-Hole (THT) Parts Library**
+  - **5mm LED** (`Red` / `Amber` / `Green` / `Blue` / `White`, round Anode `A` + square Cathode `K` with flat lens mark), **1/4W Axial Resistor** (`220Ω`, `330Ω`, `470Ω`, `1kΩ`, `4.7kΩ`, `10kΩ` with real 4-band EIA colour codes), **GL5528 Light Sensor (LDR)**, **6×6mm Tactile Pushbutton** (internal pin-pair continuity modelled automatically), **SS-12D00 Slide Switch**, **Potentiometer (`10kΩ` / `100kΩ`)**, **Radial Capacitor (`100nF` / `10µF` / `100µF`)**, **12mm Buzzer (`TMB12A05`)**, **CR2032 Coin-Cell Holder (`BS-7` / `Keystone 106`, `20.32mm` pitch)**, **G·V·S 3-Pin Servo/Sensor Header**, **1×3 & 1×4 2.54mm Pin Headers**, and **M3 Mounting Holes**.
+- **BBC micro:bit THT Edge Connector Socket**
+  - Uses the standard **BBC micro:bit 80-Pin THT Edge Connector Socket** (`4UCON 17809` / `Kitronik 5604` housing `56.8 × 8.8mm` with central card slot and 2 locating posts), breaking out all 21 active micro:bit V2 signals (`P0`, `P1`, `P2`, `3V`, `GND` main rings + `P3`–`P20` GPIOs) onto staggered hand-solderable THT pads.
+  - Students solder the socket onto the PCB and plug the micro:bit upright into the slot — shown accurately in both the 2D footprint and 3D WebGL view.
 - **Arduino UNO R3 Shield Mode**
-  - Dropping the Arduino UNO socket automatically transforms the board outline and mounting holes into an official Arduino UNO R3 shield (`68.58 × 53.34mm`), complete with Power, Analog, Digital, and ICSP headers.
+  - Dropping the Arduino UNO socket automatically transforms the board outline and mounting holes into the official Arduino UNO R3 shield profile (`68.58 × 53.34mm`), complete with Power, Analog, Digital, and ICSP headers.
 - **2-Layer Auto-Router & Design Rule Check (DRC)**
   - `0.50mm` grid Dijkstra router with `0.30mm` trace width, `0.20mm` clearance, and `0.60mm / 1.10mm` vias.
   - Real-time DRC checks for out-of-bounds parts, footprint overlaps, pad-to-pad clearance, and unrouted nets (with dashed ratsnest airwires).
@@ -52,11 +52,11 @@ node test-pcb.js
 
 **TinkerPCB** 專為中小學 STEM 課堂而設，讓學生在一節課內完成人生第一塊真正可以落廠生產的雙層印刷電路板（PCB）：
 
-1. **拖圖上板**：全部採用直插（THT）零件，方便學生親手焊接。
+1. **拖圖上板**：內置 15 款常用直插（THT）教學零件（5mm LED、四色環軸向電阻、GL5528 光敏電阻、6×6 輕觸按鈕、SS-12D00 撥動開關、可調電阻、電容、12mm 蜂鳴器、CR2032 電池座、G·V·S 舵機／感測器三針座、排針及 M3 螺絲孔），全部採用真實手焊腳距、方盤極性標示與防呆絲印。
 2. **點兩個腳接線**：內置雙層自動走線引擎（線寬 `0.30mm`、間距 `0.20mm`、過孔鑽孔 `0.60mm`），自動處理頂層／底層走線與過孔。
 3. **立體與平面檢視**：支援 Three.js WebGL 立體預覽，可順滑旋轉並翻到板底檢視底層銅線；無 WebGL 環境亦會自動切換至後備渲染器。
-4. **micro:bit 金手指與 Arduino UNO Shield**：
-   - **micro:bit 插口**：直接於板邊生成 40 格 `1.27mm` 金手指（對齊官方 V2 腳位），由板廠直接成型，學生無須焊接密腳插座。
+4. **micro:bit 插卡母座與 Arduino UNO Shield**：
+   - **micro:bit 插座**：採用標準 BBC micro:bit 專用直插母座封裝（`4UCON 17809` / `Kitronik 5604`，雙排交錯 THT 焊盤引出 21 個有效訊號腳與定位柱），焊接母座後即可將 micro:bit 垂直插落卡槽。
    - **Arduino UNO 插座**：自動將電路板外框轉換為官方 R3 Shield 尺寸與腳位。
 5. **一鍵匯出製板檔**：直接下載包含頂底銅層、阻焊層、絲印層、板邊及鑽孔檔的 `.zip`，可直接上傳至 JLCPCB 等板廠預覽及製作。
 

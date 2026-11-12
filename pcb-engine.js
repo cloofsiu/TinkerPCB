@@ -35,56 +35,53 @@
     return { id: id, x: x, y: y, drill: drill, dia: dia, group: group || id, label: label || group || id };
   }
 
-  /* micro:bit edge fingers. 40 slots at 1.27mm pitch, span 49.53mm.
-     Slot order = official V2 schematic J1 pins 1-40 (verified against
-     microbit-foundation/microbit-v2-hardware schematic + proto-pic SMD_BBC_EDGE
-     footprint: fingers 1.2 x 5.08mm on both copper layers, no drills).
-     Front view, edge down: GND ring at slot 1-6, P3 alone at slot 40. */
-  var UBIT_MAP = [];
-  (function () {
-    var ring = function (net, from, to) {
-      for (var i = from; i <= to; i++) UBIT_MAP[i - 1] = net;
-    };
-    ring("GND", 1, 6);
-    UBIT_MAP[6] = "P20";
-    UBIT_MAP[7] = "P19";
-    ring("3V", 9, 14);
-    UBIT_MAP[14] = "P16";
-    UBIT_MAP[15] = "P15";
-    UBIT_MAP[16] = "P14";
-    UBIT_MAP[17] = "P13";
-    ring("P2", 19, 22);
-    UBIT_MAP[22] = "P12";
-    UBIT_MAP[23] = "P11";
-    UBIT_MAP[24] = "P10";
-    UBIT_MAP[25] = "P9";
-    UBIT_MAP[26] = "P8";
-    ring("P1", 28, 31);
-    UBIT_MAP[31] = "P7";
-    UBIT_MAP[32] = "P6";
-    UBIT_MAP[33] = "P5";
-    UBIT_MAP[34] = "P4";
-    ring("P0", 36, 39);
-    UBIT_MAP[39] = "P3";
-  })();
+  /* BBC micro:bit 80-pin THT Edge Connector Socket (Kitronik 5604 / 4UCON 17809).
+     Housing: 56.89 x 8.88 x 14.0mm with central card slot and 2 locating posts
+     at x = +-26.035mm. The 21 active micro:bit V2 signals (5 main rings: P0, P1,
+     P2, 3V, GND + 16 GPIO strips) are broken out on 2 staggered THT rows
+     (y = -1.90mm and y = +1.90mm, minimum 2.54mm same-row pitch, 4.01mm diagonal)
+     so every signal is a distinct hand-solderable THT pad and the micro:bit plugs
+     upright into the socket. */
+  var UBIT_PINS = [
+    ["P3", -24.13, -1.9, 0],
+    ["P0", -21.59, 1.9, 1],
+    ["P4", -19.05, -1.9, 0],
+    ["P5", -16.51, 1.9, 0],
+    ["P6", -13.97, -1.9, 0],
+    ["P7", -11.43, 1.9, 0],
+    ["P1", -8.89, -1.9, 1],
+    ["P8", -6.35, 1.9, 0],
+    ["P9", -3.81, -1.9, 0],
+    ["P10", -1.27, 1.9, 0],
+    ["P11", 1.27, -1.9, 0],
+    ["P12", 3.81, 1.9, 0],
+    ["P2", 6.35, -1.9, 1],
+    ["P13", 8.89, 1.9, 0],
+    ["P14", 11.43, -1.9, 0],
+    ["P15", 13.97, 1.9, 0],
+    ["P16", 16.51, -1.9, 0],
+    ["3V", 19.05, 1.9, 1],
+    ["P19", 20.32, -1.9, 0],
+    ["P20", 22.86, 1.9, 0],
+    ["GND", 24.13, -1.9, 1]
+  ];
 
   function ubitPads() {
-    var pads = [];
-    for (var i = 0; i < 40; i++) {
-      var net = UBIT_MAP[i] || "NC";
-      pads.push({
-        id: String(i + 1),
-        x: r2(-24.765 + i * 1.27),
-        y: 2.54,
-        w: 1.2,
-        h: 5.08,
-        drill: 0,
-        dia: 1.2,
-        shape: "rect",
-        group: net,
-        label: net
-      });
-    }
+    var pads = UBIT_PINS.map(function (p) {
+      var ring = p[3] === 1;
+      return {
+        id: p[0],
+        x: p[1],
+        y: p[2],
+        drill: 0.9,
+        dia: ring ? 1.85 : 1.55,
+        ring: ring,
+        group: p[0],
+        label: p[0]
+      };
+    });
+    pads.push({ id: "M1", x: -26.04, y: 0, drill: 2.0, dia: 3.2, group: "H", label: "M1", mechanical: true });
+    pads.push({ id: "M2", x: 26.04, y: 0, drill: 2.0, dia: 3.2, group: "H", label: "M2", mechanical: true });
     return pads;
   }
 
@@ -131,7 +128,7 @@
       add("I" + (i + 1), p[1], p[2], p[0], p[0]);
     });
     [[13.97, 2.54], [15.24, 50.8], [66.04, 7.62], [66.04, 35.56]].forEach(function (p, i) {
-      pads.push({ id: "M" + (i + 1), x: p[0], y: p[1], drill: 3.2, dia: 6.0, group: "H", label: "M" + (i + 1) });
+      pads.push({ id: "M" + (i + 1), x: p[0], y: p[1], drill: 3.2, dia: 5.0, group: "H", label: "M" + (i + 1), mechanical: true });
     });
     return pads;
   }
@@ -140,15 +137,17 @@
     var pads = [];
     for (var i = 0; i < n; i++) {
       var y = (i - (n - 1) / 2) * 2.54;
-      pads.push(pad(String(i + 1), 0, y, 1.0, 1.7, String(i + 1), String(i + 1)));
+      var p = pad(String(i + 1), 0, y, 1.0, 1.75, String(i + 1), String(i + 1));
+      if (i === 0) { p.shape = "rect"; p.w = 1.75; p.h = 1.75; }
+      pads.push(p);
     }
     return {
       id: "hdr" + n,
       name: "排針 1×" + n,
-      blurb: "2.54mm 直插，腳 1 在板的下方",
+      blurb: "2.54mm 直插，方形焊盤為腳 1",
       prefix: "J",
       pads: pads,
-      box: { w: 2.6, h: n * 2.54 + 1.2 },
+      box: { w: 2.6, h: n * 2.54 + 0.6 },
       draw: { kind: "header", n: n }
     };
   }
@@ -157,23 +156,23 @@
     {
       id: "led",
       name: "LED 5mm",
-      blurb: "直插，腳距 2.54mm，鑽孔 0.9mm。A 是長腳",
+      blurb: "5mm 直插發光二極管，腳距 2.54mm。A(+) 圓盤為長腳，K(-) 方盤平邊為短腳",
       prefix: "D",
-      values: ["紅", "琥珀", "綠"],
+      values: ["紅", "琥珀", "綠", "藍", "白"],
       value: "紅",
       pads: [
-        pad("A", -1.27, 0, 0.9, 1.8, "A", "A"),
-        pad("K", 1.27, 0, 0.9, 1.8, "K", "K")
+        pad("A", -1.27, 0, 0.9, 1.75, "A", "A"),
+        { id: "K", x: 1.27, y: 0, drill: 0.9, dia: 1.75, w: 1.75, h: 1.75, shape: "rect", group: "K", label: "K" }
       ],
-      box: { w: 5.4, h: 5.4 },
+      box: { w: 5.6, h: 5.6 },
       draw: { kind: "led" }
     },
     {
       id: "res",
       name: "電阻 1/4W",
-      blurb: "軸向電阻，腳距 10.16mm，鑽孔 0.8mm",
+      blurb: "1/4W 色環軸向電阻，標準腳距 10.16mm（400 mil），鑽孔 0.8mm",
       prefix: "R",
-      values: ["220", "330", "470", "1K"],
+      values: ["220", "330", "470", "1K", "4.7K", "10K"],
       value: "330",
       pads: [
         pad("1", -5.08, 0, 0.8, 1.6, "1", "1"),
@@ -183,60 +182,125 @@
       draw: { kind: "res" }
     },
     {
+      id: "ldr",
+      name: "光敏電阻 GL5528",
+      blurb: "5mm 光敏電阻（LDR），隨光線改變阻值，腳距 2.54mm",
+      prefix: "R",
+      pads: [
+        pad("1", -1.27, 0, 0.8, 1.6, "1", "1"),
+        pad("2", 1.27, 0, 0.8, 1.6, "2", "2")
+      ],
+      box: { w: 5.4, h: 4.6 },
+      draw: { kind: "ldr" }
+    },
+    {
       id: "sw",
       name: "輕觸按鈕 6×6",
-      blurb: "對應常見 6mm 輕觸開關。左右同一邊的兩腳在內部相通",
+      blurb: "標準 6×6mm 四腳輕觸開關（6.5×4.5mm 腳距），同側 1a-1b、2a-2b 內部相通",
       prefix: "SW",
       pads: [
-        pad("1a", -3.25, -2.25, 1.1, 2.0, "1", "1"),
-        pad("1b", 3.25, -2.25, 1.1, 2.0, "1", "1"),
-        pad("2a", -3.25, 2.25, 1.1, 2.0, "2", "2"),
-        pad("2b", 3.25, 2.25, 1.1, 2.0, "2", "2")
+        pad("1a", -3.25, -2.25, 1.0, 1.8, "1", "1"),
+        pad("1b", 3.25, -2.25, 1.0, 1.8, "1", "1"),
+        pad("2a", -3.25, 2.25, 1.0, 1.8, "2", "2"),
+        pad("2b", 3.25, 2.25, 1.0, 1.8, "2", "2")
       ],
       box: { w: 8.6, h: 6.6 },
       draw: { kind: "sw" }
     },
     {
+      id: "ssw",
+      name: "撥動開關 SS-12D00",
+      blurb: "三腳單刀雙擲撥動開關，腳距 2.54mm，常作電源總開關（接 1 與 2）",
+      prefix: "SW",
+      pads: [
+        { id: "1", x: -2.54, y: 0, drill: 0.9, dia: 1.7, w: 1.7, h: 1.7, shape: "rect", group: "1", label: "1" },
+        pad("2", 0, 0, 0.9, 1.7, "2", "2"),
+        pad("3", 2.54, 0, 0.9, 1.7, "3", "3")
+      ],
+      box: { w: 9.0, h: 4.2 },
+      draw: { kind: "ssw" }
+    },
+    {
+      id: "pot",
+      name: "可調電阻 10K",
+      blurb: "三腳直插可調電阻（電位器），1、3 接兩端，2 為中間調校腳",
+      prefix: "VR",
+      values: ["10K", "100K"],
+      value: "10K",
+      pads: [
+        pad("1", -2.54, -2.54, 1.0, 1.8, "1", "1"),
+        pad("2", 0, 2.54, 1.0, 1.8, "2", "2"),
+        pad("3", 2.54, -2.54, 1.0, 1.8, "3", "3")
+      ],
+      box: { w: 7.6, h: 7.6 },
+      draw: { kind: "pot" }
+    },
+    {
+      id: "cap",
+      name: "電容",
+      blurb: "直插電容，腳距 2.54mm，+ 為長腳正極，方盤 - 為負極",
+      prefix: "C",
+      values: ["100nF", "10uF", "100uF"],
+      value: "10uF",
+      pads: [
+        pad("+", -1.27, 0, 0.8, 1.6, "+", "+"),
+        { id: "-", x: 1.27, y: 0, drill: 0.8, dia: 1.6, w: 1.6, h: 1.6, shape: "rect", group: "-", label: "-" }
+      ],
+      box: { w: 5.4, h: 5.4 },
+      draw: { kind: "cap" }
+    },
+    {
       id: "buzz",
       name: "蜂鳴器 12mm",
-      blurb: "無源蜂鳴器腳距 7.6mm。+ 接訊號一邊",
+      blurb: "Ø12mm 直插蜂鳴器（TMB12A05），標準腳距 7.62mm，+ 接訊號或正極",
       prefix: "BZ",
       pads: [
-        pad("+", -3.8, 0, 0.9, 1.8, "+", "+"),
-        pad("-", 3.8, 0, 0.9, 1.8, "-", "-")
+        pad("+", -3.81, 0, 0.9, 1.8, "+", "+"),
+        pad("-", 3.81, 0, 0.9, 1.8, "-", "-")
       ],
       box: { w: 12.4, h: 12.4 },
       draw: { kind: "buzz" }
     },
     {
       id: "bat",
-      name: "電池座 20mm",
-      blurb: "兩腳直插，腳距 20mm。落單前對一下你手邊的座",
+      name: "CR2032 電池座",
+      blurb: "Ø20mm 鈕扣電池座（BS-7 / Keystone 106），兩腳直插腳距 20.32mm",
       prefix: "BT",
       pads: [
-        pad("+", -10, 0, 1.2, 2.2, "+", "+"),
-        pad("-", 10, 0, 1.2, 2.2, "-", "-")
+        pad("+", -10.16, 0, 1.2, 2.2, "+", "+"),
+        pad("-", 10.16, 0, 1.2, 2.2, "-", "-")
       ],
-      box: { w: 22.6, h: 16 },
+      box: { w: 22.8, h: 21.6 },
       draw: { kind: "bat" }
+    },
+    {
+      id: "srv",
+      name: "舵機／感測器 3 針",
+      blurb: "標準 G-V-S 三針排針（2.54mm），可直接插 SG90 舵機或 3 線感測器",
+      prefix: "J",
+      pads: [
+        { id: "G", x: -2.54, y: 0, drill: 1.0, dia: 1.75, w: 1.75, h: 1.75, shape: "rect", group: "G", label: "G" },
+        pad("V", 0, 0, 1.0, 1.75, "V", "V"),
+        pad("S", 2.54, 0, 1.0, 1.75, "S", "S")
+      ],
+      box: { w: 8.0, h: 3.0 },
+      draw: { kind: "srv" }
     },
     header(3),
     header(4),
     {
       id: "ubit",
-      name: "micro:bit 插口",
-      blurb: "金手指直接做插口，micro:bit 插上去，不用焊接",
+      name: "micro:bit 插座",
+      blurb: "BBC micro:bit 專用直插金手指母座（4UCON / Kitronik），焊接後直接將 micro:bit 插落卡槽",
       prefix: "U",
-      edge: true,
-      slab: { x: -25.8, y: 0, w: 51.6, h: 42 },
       pads: ubitPads(),
-      box: { w: 51.6, h: 42 },
+      box: { w: 57.0, h: 9.0 },
       draw: { kind: "ubit" }
     },
     {
       id: "uno",
       name: "Arduino UNO 插座",
-      blurb: "塊板會變成 UNO shield，照官方 R3 外形同釘位",
+      blurb: "塊板會變成 UNO R3 Shield，照官方尺寸與排母釘位疊在 UNO 上面",
       prefix: "U",
       edge: true,
       slab: { x: 0, y: 0, w: 68.58, h: 53.34 },
@@ -254,7 +318,7 @@
     {
       id: "hole",
       name: "M3 鎖孔",
-      blurb: "鍍孔 3.2mm，可過 M3 螺絲。不接入電路",
+      blurb: "鍍孔 3.2mm，外環 6.0mm，可穿 M3 螺絲及銅柱固定電路板",
       prefix: "H",
       mechanical: true,
       pads: [pad("M", 0, 0, 3.2, 6.0, "M", "M")],
@@ -325,9 +389,10 @@
         y: r2(part.y + xy[1]),
         drill: p.drill || 0,
         dia: p.dia,
+        ring: !!p.ring,
         uid: part.uid,
         ref: part.ref,
-        mechanical: !!spec.mechanical
+        mechanical: !!(spec.mechanical || p.mechanical)
       };
       if (p.shape === "rect") {
         out.shape = "rect";
@@ -404,7 +469,11 @@
     var a = findPart(doc, uid1);
     var b = findPart(doc, uid2);
     if (!a || !b) return null;
-    if (partById(a.type).mechanical || partById(b.type).mechanical) return null;
+    var sa = partById(a.type), sb = partById(b.type);
+    if (sa.mechanical || sb.mechanical) return null;
+    var pa = sa.pads.filter(function (p) { return p.id === pad1 || p.group === pad1; })[0];
+    var pb = sb.pads.filter(function (p) { return p.id === pad2 || p.group === pad2; })[0];
+    if (!pa || !pb || pa.mechanical || pb.mechanical) return null;
     var na = netOf(doc, uid1, pad1);
     var nb = netOf(doc, uid2, pad2);
     var net;
@@ -481,18 +550,14 @@
 
   function outlineLoops(doc) {
     if (doc.outline === "uno") {
-      /* UNO R3 outline from Arduino_Uno_R3_Shield B.SilkS segments
-         (verified working shield library), origin = bottom-left, y up.
-         B.SilkS is a BACK layer: as authored it draws the connector band
-         on +x — mirrored here (x -> 68.58 - x) so the outline matches the
-         footprint's own pads/Fab layers, where SCL/SDA (18.8) and
-         NC/IOREF (27.9) are the pins NEAREST the connector edge at x=0,
-         and the Fab bodies put Barrel Jack at (5.07, 7.80) and USB at
-         (1.54, 38.10) on that same edge. Left band = USB/barrel side,
-         left-bottom chamfer = barrel-jack corner. */
+      /* Official Arduino UNO R3 mechanical profile (68.58 x 53.34mm, origin
+         bottom-left, y up): straight left edge at x=0 (USB-B at y=38.1,
+         DC barrel jack at y=7.8), stepped right edge widening from 66.04 to
+         68.58mm between y=3.81 and y=38.1 around the ICSP header and the two
+         right M3 mounting holes, plus top-right 45-deg chamfer. */
       return [[
-        [2.54, 0], [68.58, 0], [68.58, 53.34], [4.064, 53.34],
-        [2.54, 51.816], [2.54, 40.64], [0, 38.1], [0, 3.81], [2.54, 1.27]
+        [0, 0], [66.04, 0], [66.04, 1.27], [68.58, 3.81], [68.58, 38.1],
+        [66.04, 40.64], [66.04, 51.816], [64.516, 53.34], [0, 53.34]
       ]];
     }
     return [[[0, 0], [doc.w, 0], [doc.w, doc.h], [0, doc.h]]];
@@ -1102,34 +1167,84 @@
         }
         if (spec.draw.kind === "led") {
           var pts = [];
-          for (var a = 0; a <= 16; a++) {
-            var ang = (a / 16) * Math.PI * 2;
-            var xy = rot90(Math.cos(ang) * 2.3, Math.sin(ang) * 2.3, k);
+          for (var a = -7; a <= 7; a++) {
+            var ang = (a / 9) * Math.PI;
+            var xy = rot90(Math.cos(ang) * 2.5, Math.sin(ang) * 2.5, k);
             pts.push([r2(part.x + xy[0]), r2(part.y + xy[1])]);
           }
+          pts.push(pts[0]);
           line(pts);
-          L(0.4, -1.2, 0.4, 1.2);
         } else if (spec.draw.kind === "res") {
-          rect(6.2, 2.2);
-          L(-5.0, 0, -3.1, 0);
-          L(3.1, 0, 5.0, 0);
+          rect(6.4, 2.2);
+          L(-4.0, 0, -3.2, 0);
+          L(3.2, 0, 4.0, 0);
+        } else if (spec.draw.kind === "ldr") {
+          rect(4.6, 3.8);
+          L(-1.2, -0.8, 1.2, -0.8);
+          L(1.2, -0.8, -1.2, 0);
+          L(-1.2, 0, 1.2, 0);
+          L(1.2, 0, -1.2, 0.8);
+          L(-1.2, 0.8, 1.2, 0.8);
         } else if (spec.draw.kind === "sw") {
-          rect(6, 6);
+          L(-2.1, -3.0, 2.1, -3.0);
+          L(-2.1, 3.0, 2.1, 3.0);
+          L(-1.8, -2.25, 1.8, -2.25);
+          L(-1.8, 2.25, 1.8, 2.25);
+        } else if (spec.draw.kind === "ssw") {
+          rect(8.6, 3.8);
+          rect(2.2, 2.0);
+        } else if (spec.draw.kind === "pot") {
+          rect(6.8, 6.8);
+          var ppts = [];
+          for (a = 0; a <= 16; a++) {
+            ang = (a / 16) * Math.PI * 2;
+            xy = rot90(Math.cos(ang) * 2.4, Math.sin(ang) * 2.4, k);
+            ppts.push([r2(part.x + xy[0]), r2(part.y + xy[1])]);
+          }
+          line(ppts);
+        } else if (spec.draw.kind === "cap") {
+          var kpts = [];
+          for (a = 0; a <= 16; a++) {
+            ang = (a / 16) * Math.PI * 2;
+            xy = rot90(Math.cos(ang) * 2.5, Math.sin(ang) * 2.5, k);
+            kpts.push([r2(part.x + xy[0]), r2(part.y + xy[1])]);
+          }
+          line(kpts);
+          L(1.9, -1.2, 1.9, 1.2);
         } else if (spec.draw.kind === "buzz") {
           var cpts = [];
           for (a = 0; a <= 20; a++) {
             ang = (a / 20) * Math.PI * 2;
-            xy = rot90(Math.cos(ang) * 5.2, Math.sin(ang) * 5.2, k);
+            xy = rot90(Math.cos(ang) * 5.8, Math.sin(ang) * 5.8, k);
             cpts.push([r2(part.x + xy[0]), r2(part.y + xy[1])]);
           }
           line(cpts);
         } else if (spec.draw.kind === "bat") {
-          rect(18, 12);
+          var bpts = [];
+          for (a = -12; a <= 12; a++) {
+            ang = (a / 16) * Math.PI;
+            xy = rot90(Math.sin(ang) * 10.4, -Math.cos(ang) * 10.4, k);
+            bpts.push([r2(part.x + xy[0]), r2(part.y + xy[1])]);
+          }
+          bpts.push(bpts[0]);
+          line(bpts);
+        } else if (spec.draw.kind === "srv") {
+          rect(7.6, 2.54);
+          ["G", "V", "S"].forEach(function (lb, idx) {
+            var sp = rot90((idx - 1) * 2.54 - 0.35, 1.7, k);
+            if (part.x + sp[0] > 0.6 && part.x + sp[0] < doc.w - 1.2 && part.y + sp[1] > 0.6 && part.y + sp[1] < doc.h - 1.2) {
+              strokeText(lb, part.x + sp[0], part.y + sp[1], 0.72).strokes.forEach(line);
+            }
+          });
         } else if (spec.draw.kind === "header") {
-          rect(2.2, spec.draw.n * 2.54);
+          rect(2.54, spec.draw.n * 2.54);
           var p1 = worldPads(part)[0];
           line([[p1.x - 1.3, p1.y], [p1.x - 1.3, p1.y + 0.8]]);
         } else if (spec.draw.kind === "uno") {
+          (spec.footprints || []).forEach(function (fp) {
+            var x0 = fp[0], y0 = fp[1], fw = fp[2], fh = fp[3];
+            line([[x0, y0], [x0 + fw, y0], [x0 + fw, y0 + fh], [x0, y0 + fh], [x0, y0]]);
+          });
           worldPads(part).forEach(function (p) {
             if (p.group === "NC" || p.group === "H") return;
             var up = p.y < 40; /* power row: label runs upward */
@@ -1143,39 +1258,32 @@
             });
           });
         } else if (spec.draw.kind === "ubit") {
-          if (part.rot === 0 || part.rot === 180) {
-            var tops = part.rot === 0 ? 1 : -1;
-            ["GND", "3V", "P2", "P1", "P0"].forEach(function (net) {
-              var gp = worldPads(part).filter(function (p) { return p.group === net; });
-              if (!gp.length) return;
-              var mx = gp.reduce(function (s, p) { return s + p.x; }, 0) / gp.length;
-              var ty = part.y + tops * 6.6;
-              if (ty < 0.6 || ty > doc.h - 1.4) return;
-              strokeText(net, mx - 1.1, ty, 0.8).strokes.forEach(line);
-            });
-          } else {
-            var dirX = part.rot === 270 ? 1 : -1;
-            ["GND", "3V", "P2", "P1", "P0"].forEach(function (net) {
-              var gp = worldPads(part).filter(function (p) { return p.group === net; });
-              if (!gp.length) return;
-              var my = gp.reduce(function (s, p) { return s + p.y; }, 0) / gp.length;
-              var tx = part.x + dirX * 6.6 - (dirX < 0 ? 1.8 : 0);
-              if (tx < 0.6 || tx > doc.w - 2.4) return;
-              strokeText(net, tx, my - 0.4, 0.8).strokes.forEach(line);
-            });
-          }
+          rect(56.8, 8.8);
+          L(-25.8, -0.5, 25.8, -0.5);
+          L(-25.8, 0.5, 25.8, 0.5);
+          spec.pads.forEach(function (lp) {
+            if (!lp.ring) return;
+            var off = rot90(lp.x, lp.y >= 0 ? 3.2 : -3.2, k);
+            var tx = part.x + off[0] - (lp.label.length * 0.35);
+            var ty = part.y + off[1] - 0.35;
+            if (tx > 0.6 && tx < doc.w - 2.4 && ty > 0.6 && ty < doc.h - 1.4) {
+              strokeText(lp.label, tx, ty, 0.78).strokes.forEach(line);
+            }
+          });
         } else if (spec.draw.kind === "hole") {
           var hpts = [];
           for (a = 0; a <= 16; a++) {
             ang = (a / 16) * Math.PI * 2;
-            hpts.push([r2(part.x + Math.cos(ang) * 2.2), r2(part.y + Math.sin(ang) * 2.2)]);
+            hpts.push([r2(part.x + Math.cos(ang) * 3.25), r2(part.y + Math.sin(ang) * 3.25)]);
           }
           line(hpts);
         }
-        var label = part.ref + (part.value && part.type === "res" ? " " + part.value : "");
-        var box = bodyBox(part);
-        var laid = strokeText(label, box.x, box.y + box.h + 0.6, 1.05);
-        if (laid.width > 0 && box.y + box.h + 1.8 < doc.h - 0.4) laid.strokes.forEach(line);
+        if (part.type !== "hole" && part.type !== "uno") {
+          var label = part.ref + (part.value && (part.type === "res" || part.type === "cap" || part.type === "pot") ? " " + part.value : "");
+          var box = bodyBox(part);
+          var laid = strokeText(label, box.x, box.y + box.h + 0.6, 1.05);
+          if (laid.width > 0 && box.y + box.h + 1.8 < doc.h - 0.4) laid.strokes.forEach(line);
+        }
         worldPads(part).forEach(function (p) {
           if (p.label !== "+" && p.label !== "A") return;
           var dx = p.x - part.x, dy = p.y - part.y;
@@ -1365,25 +1473,28 @@
       return doc;
     }
     if (id === "ubit") {
-      /* Host board roughly micro:bit-sized (Kitronik badge scale):
-         module docked on the bottom edge, demo strip + title free on top. */
+      /* BBC micro:bit Breakout PCB: soldered 80-pin THT Edge Connector
+         Socket near the top of the board, leaving open board space below
+         for the student's through-hole parts (LED + resistor + buzzer). */
       doc = blank("micro:bit 小燈");
-      doc.w = 66;
-      doc.h = 62;
+      doc.w = 72;
+      doc.h = 54;
       doc.sig = 1;
       doc.sigTop = 1;
-      var ub = addPart(doc, "ubit", 33, 0);
-      ub.x = 33;
-      ub.y = 0;
-      var ld = addPart(doc, "led", 60.96, 50.8);
-      var rs = addPart(doc, "res", 45.72, 50.8);
+      var ub = addPart(doc, "ubit", 35.56, 39.37);
+      var rs = addPart(doc, "res", 20.32, 17.78);
       rs.value = "330";
-      connect(doc, ub.uid, "P0", ld.uid, "A");
-      connect(doc, ld.uid, "K", rs.uid, "1");
-      connect(doc, rs.uid, "2", ub.uid, "GND");
+      var ld = addPart(doc, "led", 35.56, 17.78);
+      var bz = addPart(doc, "buzz", 53.34, 17.78);
+      connect(doc, ub.uid, "P0", rs.uid, "1");
+      connect(doc, rs.uid, "2", ld.uid, "A");
+      connect(doc, ld.uid, "K", ub.uid, "GND");
+      connect(doc, ub.uid, "P1", bz.uid, "+");
+      connect(doc, bz.uid, "-", ub.uid, "GND");
       doc.nets[0].name = "micro:bit P0";
       doc.nets[1].name = "燈的正極";
       doc.nets[2].name = "接地";
+      doc.nets[3].name = "micro:bit P1";
       return doc;
     }
     if (id === "uno") {
@@ -1428,12 +1539,24 @@
     doc.parts.forEach(function (p) {
       if (!p || !p.uid || !partById(p.type)) return;
       alive[p.uid] = 1;
+      var rot = [0, 90, 180, 270].indexOf(Number(p.rot)) >= 0 ? Number(p.rot) : 0;
+      var px = snap(Number(p.x) || 0);
+      var py = snap(Number(p.y) || 0);
+      if (p.type === "ubit") {
+        var bb = bodyBox({ type: "ubit", x: px, y: py, rot: rot });
+        if (bb.x < 0 || bb.y < 0 || bb.x + bb.w > out.w || bb.y + bb.h > out.h) {
+          rot = 0;
+          if (out.w < 60) out.w = 72;
+          px = snap(Math.max(30.48, Math.min(out.w - 30.48, px || out.w / 2)));
+          py = snap(Math.max(7.62, Math.min(out.h - 7.62, py || out.h - 12.7)));
+        }
+      }
       out.parts.push({
         uid: p.uid,
         type: p.type,
-        x: snap(Number(p.x) || 0),
-        y: snap(Number(p.y) || 0),
-        rot: [0, 90, 180, 270].indexOf(Number(p.rot)) >= 0 ? Number(p.rot) : 0,
+        x: px,
+        y: py,
+        rot: rot,
         ref: String(p.ref || "?"),
         value: String(p.value || "")
       });

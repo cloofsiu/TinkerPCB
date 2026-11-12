@@ -405,31 +405,43 @@
     tabCheck: ["檢查", "Check"],
     tabOrder: ["落單", "Order"],
     statusStart: ["先拖一個圖上板", "Drag a picture onto the board"],
-    nick_led: ["小燈", "Lamp"],
-    tip_led: ["會發光", "It lights up"],
+    nick_led: ["小燈", "Lamp (LED)"],
+    tip_led: ["5mm 發光，方盤為短腳", "A=long(+), square K=short(-)"],
     nick_res: ["電阻", "Resistor"],
-    tip_res: ["保護小燈", "Protects the lamp"],
-    nick_sw: ["按鈕", "Button"],
-    tip_sw: ["撳一下", "Press it"],
+    tip_res: ["色環限流保護", "Limits current"],
+    nick_ldr: ["光敏電阻", "Light Sensor"],
+    tip_ldr: ["感應光暗 GL5528", "Senses light (LDR)"],
+    nick_sw: ["輕觸按鈕", "Pushbutton"],
+    tip_sw: ["6×6 四腳按鈕", "6×6 tactile switch"],
+    nick_ssw: ["撥動開關", "Slide Switch"],
+    tip_ssw: ["三腳電源開關", "ON / OFF switch"],
+    nick_pot: ["可調電阻", "Knob (Pot)"],
+    tip_pot: ["扭動調校阻值", "Turn to adjust"],
+    nick_cap: ["電容", "Capacitor"],
+    tip_cap: ["穩定電源濾波", "Smooths voltage"],
     nick_buzz: ["蜂鳴器", "Buzzer"],
-    tip_buzz: ["會發聲", "It beeps"],
-    nick_bat: ["電池", "Battery"],
-    tip_bat: ["供電", "Gives power"],
-    nick_hdr3: ["三隻腳", "3 pins"],
-    tip_hdr3: ["接出去", "Connect out"],
-    nick_hdr4: ["四隻腳", "4 pins"],
-    tip_hdr4: ["接出去", "Connect out"],
-    nick_hole: ["螺絲孔", "Screw hole"],
-    tip_hole: ["鎖實塊板", "Holds the board"],
-    nick_ubit: ["micro:bit", "micro:bit"],
-    tip_ubit: ["金手指插口，不用焊接", "Edge fingers, no soldering needed"],
-    nick_uno: ["UNO", "Arduino UNO"],
-    tip_uno: ["插上去，塊板變 shield", "Plug it in, your board is a shield"],
+    tip_buzz: ["12mm 發聲器", "12mm piezo/magnetic"],
+    nick_bat: ["鈕扣電池座", "CR2032 Holder"],
+    tip_bat: ["Ø20mm 電池供電", "20mm coin cell"],
+    nick_srv: ["舵機 3 針", "Servo 3-Pin"],
+    tip_srv: ["G·V·S 接舵機／感測器", "G·V·S sensor/servo"],
+    nick_hdr3: ["排針 1×3", "Header 1×3"],
+    tip_hdr3: ["2.54mm 三針", "2.54mm 3-pin"],
+    nick_hdr4: ["排針 1×4", "Header 1×4"],
+    tip_hdr4: ["2.54mm 四針", "2.54mm 4-pin"],
+    nick_hole: ["M3 螺絲孔", "M3 Hole"],
+    tip_hole: ["Ø3.2mm 鎖銅柱", "3.2mm mounting hole"],
+    nick_ubit: ["micro:bit 座", "micro:bit Socket"],
+    tip_ubit: ["焊接母座，直插 micro:bit", "Solder socket, plug micro:bit in"],
+    nick_uno: ["UNO Shield", "Arduino UNO"],
+    tip_uno: ["疊上 UNO 變擴展板", "Stacks on UNO as a shield"],
     tplUno: ["UNO 小燈", "UNO light"],
     unoFixed: ["UNO 插座就係塊板本身，唔使旋轉。", "The UNO socket IS the board. Nothing to turn."],
     val_紅: ["紅", "Red"],
     val_琥珀: ["琥珀", "Amber"],
     val_綠: ["綠", "Green"],
+    val_藍: ["藍", "Blue"],
+    val_白: ["白", "White"],
     noRoom: ["板上沒有空位", "No empty spot"],
     noFit: ["這個位置放不下", "It does not fit there"],
     orbit: ["拖來轉一轉。要改圖先按平面。正面會望落塊板上面。", "Drag to turn. Tap Flat to change parts. Front looks down on the top."],
@@ -452,7 +464,7 @@
     green: ["綠", "Green"],
     black: ["黑", "Black"],
     white: ["白", "White"],
-    limits: ["沒有原理圖，沒有貼片。電池座腳距是 20mm，落單前對一下實物。micro:bit 插口的金手指按官方 pinmap 排列，落單前拿真 micro:bit 比對一次方向。", "No schematic page, no surface-mount parts. The battery holder pins are 20 mm apart. The micro:bit fingers follow the official pin map. Check the direction against a real micro:bit before you order."],
+    limits: ["全部採用直插（THT）手焊封裝：micro:bit 採用標準直插母座（4UCON / Kitronik 雙排交錯焊腳），焊接母座後將 micro:bit 垂直插落卡槽；CR2032 電池座腳距為 20.32mm（BS-7 / Keystone）。落單前請核對實物方向。", "All footprints are hand-solder THT: the micro:bit socket uses the standard staggered THT edge-connector socket (solder the socket onto the PCB, then plug the micro:bit upright into the slot); CR2032 holder pitch is 20.32 mm."],
     order1: ["按右上角下載製板檔。壓縮檔只有製板需要的檔。", "Tap Download files. The zip has only the factory files."],
     order2: ["打開 jlcpcb.com，按 Order now，上傳這個 zip。", "Open jlcpcb.com, tap Order now, and upload the zip."],
     order3: ["選 2 層、1.6mm、1oz、噴錫、5 片。顏色在網站選。", "Choose 2 layers, 1.6 mm, 1 oz, HASL, 5 boards. Pick the colour on their site."],
@@ -582,18 +594,36 @@
       capBlue: std(0x3a84e8, 0.45),
       resBody: std(0xecc68a, 0.65),
       bandRed: std(0xcc342e, 0.5),
+      bandOrange: std(0xe6721c, 0.5),
+      bandYellow: std(0xe8c424, 0.5),
+      bandViolet: std(0x7838b8, 0.5),
+      bandBrown: std(0x6e3b1e, 0.5),
+      bandBlack: std(0x18181b, 0.5),
       bandBlue: std(0x4640b0, 0.5),
-      red: std(0xe23636, 0.4),
-      amber: std(0xf09620, 0.4),
-      green: std(0x2ab056, 0.4),
+      red: std(0xe23636, 0.28),
+      amber: std(0xf09620, 0.28),
+      green: std(0x2ab056, 0.28),
+      blue: std(0x2e7ef0, 0.28),
+      whiteLed: std(0xf0f4fc, 0.25),
       yellow: std(0xffd640, 0.4),
       coin: std(0xd4a834, 0.35, 0.7),
       plusRed: std(0xc42828, 0.5),
-      ubMat: new T3.MeshStandardMaterial({ color: 0x24487a, roughness: 0.6, transparent: true, opacity: 0.82 }),
+      whiteP: std(0xf2efe8, 0.55),
+      ldrTop: std(0xdc6e32, 0.45),
+      ubMat: new T3.MeshStandardMaterial({ color: 0x20242c, roughness: 0.55 }),
       unoMat: new T3.MeshStandardMaterial({ color: 0x00768a, roughness: 0.55 })
     };
     return MATS;
   }
+
+  var RES_BANDS = {
+    "220": [["#cc342e", "bandRed"], ["#cc342e", "bandRed"], ["#6e3b1e", "bandBrown"], ["#d4a834", "gold"]],
+    "330": [["#e6721c", "bandOrange"], ["#e6721c", "bandOrange"], ["#6e3b1e", "bandBrown"], ["#d4a834", "gold"]],
+    "470": [["#e8c424", "bandYellow"], ["#7838b8", "bandViolet"], ["#6e3b1e", "bandBrown"], ["#d4a834", "gold"]],
+    "1K":  [["#6e3b1e", "bandBrown"], ["#18181b", "bandBlack"], ["#cc342e", "bandRed"], ["#d4a834", "gold"]],
+    "4.7K":[["#e8c424", "bandYellow"], ["#7838b8", "bandViolet"], ["#cc342e", "bandRed"], ["#d4a834", "gold"]],
+    "10K": [["#6e3b1e", "bandBrown"], ["#18181b", "bandBlack"], ["#e6721c", "bandOrange"], ["#d4a834", "gold"]]
+  };
 
   function mesh(geo, mat, x, y, z, shadow) {
     var m = new T3.Mesh(geo, mat);
@@ -723,52 +753,131 @@
       G.position.set(part.x, 0, doc.h - part.y);
       G.rotation.y = ((part.rot | 0) * Math.PI) / 180;
       if (part.type === "led") {
-        var col = part.value === "綠" ? M.green : part.value === "琥珀" ? M.amber : M.red;
-        G.add(cyl(2.5, 6.6, col, 0, 4.8, 0));
-        var dome = new T3.Mesh(new T3.SphereGeometry(1.55, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), col);
-        dome.position.set(0, 8.1, 0);
+        var col = part.value === "綠" ? M.green : part.value === "琥珀" ? M.amber : part.value === "藍" ? M.blue : part.value === "白" ? M.whiteLed : M.red;
+        G.add(cyl(2.85, 1.0, col, 0, 2.0, 0));
+        G.add(cyl(2.5, 5.4, col, 0, 5.2, 0));
+        var dome = new T3.Mesh(new T3.SphereGeometry(2.5, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), col);
+        dome.position.set(0, 7.9, 0);
         G.add(dome);
-        G.add(cyl(0.28, 1.6, M.gold, -1.27, 0.9, 0));
-        G.add(cyl(0.28, 1.6, M.gold, 1.27, 0.9, 0));
+        G.add(cyl(0.28, 2.6, M.silver, -1.27, 0.5, 0));
+        G.add(cyl(0.28, 2.6, M.silver, 1.27, 0.5, 0));
       } else if (part.type === "res") {
-        G.add(box(6.3, 2.4, 2.5, M.resBody, 0, 4.0, 0));
-        G.add(box(1.1, 2.5, 2.6, M.bandRed, -0.9, 4.0, 0));
-        G.add(box(0.7, 2.5, 2.6, M.bandBlue, 1.2, 4.0, 0));
-        [-5.08, 5.08].forEach(function (lx) {
-          G.add(cyl(0.28, 3.8, M.gold, lx, 2.0, 0));
-          G.add(cyl(0.28, 1.93, M.gold, lx < 0 ? -4.115 : 4.115, 3.95, 0));
-          G.children[G.children.length - 1].rotation.z = Math.PI / 2;
+        var rb = cyl(1.25, 6.4, M.resBody, 0, 3.6, 0);
+        rb.rotation.z = Math.PI / 2;
+        G.add(rb);
+        var bands = RES_BANDS[part.value] || RES_BANDS["330"];
+        [-2.0, -0.8, 0.4, 2.0].forEach(function (bx, bi) {
+          var bm = cyl(1.3, 0.55, M[bands[bi][1]] || M.bandRed, bx, 3.6, 0);
+          bm.rotation.z = Math.PI / 2;
+          G.add(bm);
         });
+        [-5.08, 5.08].forEach(function (lx) {
+          G.add(cyl(0.28, 4.4, M.silver, lx, 1.4, 0));
+          var hl = cyl(0.28, 1.9, M.silver, lx < 0 ? -4.1 : 4.1, 3.6, 0);
+          hl.rotation.z = Math.PI / 2;
+          G.add(hl);
+        });
+      } else if (part.type === "ldr") {
+        G.add(cyl(2.3, 1.4, M.whiteP, 0, 2.9, 0));
+        G.add(cyl(2.15, 0.35, M.ldrTop, 0, 3.75, 0));
+        G.add(box(2.8, 0.12, 0.35, M.silver, 0, 3.96, -0.7));
+        G.add(box(2.8, 0.12, 0.35, M.silver, 0, 3.96, 0));
+        G.add(box(2.8, 0.12, 0.35, M.silver, 0, 3.96, 0.7));
+        G.add(cyl(0.26, 3.2, M.silver, -1.27, 1.1, 0));
+        G.add(cyl(0.26, 3.2, M.silver, 1.27, 1.1, 0));
       } else if (part.type === "sw") {
-        G.add(box(6.4, 3.1, 6.4, M.blackP, 0, 1.6, 0));
-        G.add(cyl(2.15, 2.3, M.capBlue, 0, 4.3, 0));
+        G.add(box(6.0, 3.2, 6.0, M.blackP, 0, 1.65, 0));
+        G.add(box(5.6, 0.25, 5.6, M.silver, 0, 3.3, 0));
+        G.add(cyl(1.75, 1.9, M.capBlue, 0, 4.3, 0));
+        [[-3.25, -2.25], [3.25, -2.25], [-3.25, 2.25], [3.25, 2.25]].forEach(function (pt) {
+          G.add(cyl(0.32, 1.6, M.silver, pt[0], 0.2, pt[1]));
+        });
+      } else if (part.type === "ssw") {
+        G.add(box(8.6, 3.5, 3.8, M.silver, 0, 1.9, 0));
+        G.add(box(4.8, 0.4, 2.0, M.dark, 0, 3.7, 0));
+        G.add(box(1.8, 2.8, 1.6, M.blackP, -1.1, 5.0, 0));
+        [-2.54, 0, 2.54].forEach(function (px) {
+          G.add(cyl(0.3, 1.6, M.silver, px, 0.2, 0));
+        });
+      } else if (part.type === "pot") {
+        G.add(box(6.8, 4.2, 6.8, M.capBlue, 0, 2.2, 0));
+        G.add(cyl(2.6, 3.2, M.whiteP, 0, 5.8, 0));
+        G.add(box(0.5, 0.4, 3.4, M.dark, 0, 7.45, 0));
+        [[-2.54, 2.54], [0, -2.54], [2.54, 2.54]].forEach(function (pt) {
+          G.add(cyl(0.32, 1.6, M.silver, pt[0], 0.2, pt[1]));
+        });
+      } else if (part.type === "cap") {
+        G.add(cyl(2.5, 6.6, M.navy, 0, 3.9, 0));
+        G.add(cyl(2.0, 0.15, M.silver, 0, 7.25, 0));
+        G.add(box(0.9, 6.5, 1.6, M.whiteP, 1.95, 3.9, 0));
+        G.add(cyl(0.28, 1.8, M.silver, -1.27, 0.3, 0));
+        G.add(cyl(0.28, 1.8, M.silver, 1.27, 0.3, 0));
       } else if (part.type === "buzz") {
-        G.add(cyl(5.4, 5.7, M.blackP, 0, 2.9, 0));
-        G.add(cyl(2.3, 0.3, M.gold, 0, 5.9, 0));
+        G.add(cyl(5.8, 6.2, M.blackP, 0, 3.15, 0));
+        G.add(cyl(1.8, 0.35, M.dark, 0, 6.18, 0));
+        G.add(cyl(1.3, 0.2, M.gold, 0, 6.08, 0));
+        G.add(box(1.4, 0.15, 0.35, M.whiteP, -3.2, 6.3, 0));
+        G.add(box(0.35, 0.15, 1.4, M.whiteP, -3.2, 6.3, 0));
       } else if (part.type === "bat") {
-        G.add(box(16.5, 3.4, 11, M.silver, 0, 1.75, 0));
-        G.add(cyl(5.8, 0.75, M.coin, 0, 3.775, 0));
-        G.add(box(1.6, 0.35, 0.45, M.plusRed, -3.2, 4.3, 2.2));
-        G.add(box(0.45, 0.35, 1.6, M.plusRed, -3.2, 4.3, 2.2));
+        G.add(cyl(10.6, 4.2, M.blackP, 0, 2.15, 0));
+        G.add(box(22.2, 2.6, 5.4, M.blackP, 0, 1.35, 0));
+        G.add(cyl(9.8, 3.0, M.silver, 0, 2.9, 0));
+        G.add(box(11.5, 0.45, 3.2, M.gold, -5.0, 4.55, 0));
+        G.add(box(1.2, 4.4, 3.2, M.gold, -10.16, 2.4, 0));
+        G.add(box(1.8, 0.2, 0.45, M.plusRed, 3.5, 4.48, 0));
+        G.add(box(0.45, 0.2, 1.8, M.plusRed, 3.5, 4.48, 0));
+      } else if (part.type === "srv") {
+        G.add(box(2.54, 2.5, 2.5, M.blackP, -2.54, 1.3, 0));
+        G.add(box(2.54, 2.5, 2.5, M.plusRed, 0, 1.3, 0));
+        G.add(box(2.54, 2.5, 2.5, M.amber, 2.54, 1.3, 0));
+        [-2.54, 0, 2.54].forEach(function (px) {
+          G.add(box(0.64, 8.2, 0.64, M.gold, px, 3.6, 0));
+        });
       } else if (part.type === "hdr3" || part.type === "hdr4") {
         var n = part.type === "hdr3" ? 3 : 4;
-        G.add(box(2.5, 2.4, n * 2.54 - 0.5, M.blackP, 0, 1.25, 0));
+        G.add(box(2.5, 2.5, n * 2.54, M.blackP, 0, 1.3, 0));
         for (var i = 0; i < n; i++) {
-          G.add(cyl(0.3, 5.2, M.gold, 0, 5.1, (i - (n - 1) / 2) * 2.54));
+          G.add(box(0.64, 8.2, 0.64, M.gold, 0, 3.6, (i - (n - 1) / 2) * 2.54));
         }
       } else if (part.type === "ubit") {
-        var ubGeo = new T3.ExtrudeGeometry(roundedShape(51.6, 42, 1.5), { depth: 1.9, bevelEnabled: false });
-        var ub = new T3.Mesh(ubGeo, M.ubMat);
-        ub.rotation.x = -Math.PI / 2;
-        ub.position.set(0, 2.85, 0);
-        ub.castShadow = true;
-        G.add(ub);
-        G.add(box(48, 1.98, 1.2, M.gold, 0, 3.84, -0.6));
+        /* 1. Soldered THT Edge Connector Socket (4UCON 17809 / Kitronik 5604) */
+        G.add(box(56.8, 3.6, 8.8, M.blackP, 0, 1.8, 0));
+        G.add(box(56.8, 9.2, 3.4, M.blackP, 0, 4.6, -2.7));
+        G.add(box(56.8, 9.2, 3.4, M.blackP, 0, 4.6, 2.7));
+        G.add(box(2.6, 9.2, 8.8, M.blackP, -27.1, 4.6, 0));
+        G.add(box(2.6, 9.2, 8.8, M.blackP, 27.1, 4.6, 0));
+        G.add(cyl(0.95, 2.6, M.blackP, -26.04, -0.5, 0));
+        G.add(cyl(0.95, 2.6, M.blackP, 26.04, -0.5, 0));
+        PCB.partById("ubit").pads.forEach(function (up) {
+          if (up.mechanical) return;
+          G.add(box(0.5, 3.2, 0.5, M.gold, up.x, 0.4, -up.y));
+        });
+        /* 2. BBC micro:bit V2 plugged UPRIGHT into the socket slot */
+        var mb = box(51.6, 42.0, 1.6, M.ubMat, 0, 26.5, 0);
+        G.add(mb);
+        G.add(box(51.6, 6.2, 1.72, M.gold, 0, 8.6, 0));
+        [-21.59, -8.89, 6.35, 19.05, 24.13].forEach(function (rx) {
+          var rg = cyl(1.8, 1.82, M.gold, rx, 10.6, 0);
+          rg.rotation.x = Math.PI / 2;
+          G.add(rg);
+          var rh = cyl(0.9, 1.9, M.dark, rx, 10.6, 0);
+          rh.rotation.x = Math.PI / 2;
+          G.add(rh);
+        });
         for (var mx = -2; mx <= 2; mx++) {
           for (var my = 0; my < 5; my++) {
-            G.add(cyl(1.05, 0.2, M.yellow, mx * 4, 4.85, -(17 + my * 4)));
+            G.add(box(1.3, 1.9, 0.35, M.red, mx * 3.6, 20.5 + my * 3.6, 0.88));
           }
         }
+        [-19.5, 19.5].forEach(function (bx) {
+          G.add(box(5.2, 5.2, 1.4, M.silver, bx, 27.5, 1.2));
+          var bc = cyl(1.6, 1.2, M.capBlue, bx, 27.5, 1.85);
+          bc.rotation.x = Math.PI / 2;
+          G.add(bc);
+        });
+        G.add(box(5.6, 2.8, 0.25, M.gold, 0, 41.2, 0.85));
+        G.add(box(7.6, 2.8, 5.4, M.silver, 0, 47.2, -1.2));
+        G.add(box(6.2, 5.2, 4.4, M.whiteP, 14.5, 43.5, -2.6));
       } else if (part.type === "uno") {
         /* Real shield stacking: the UNO is the BASE under the kid's
            board. Slab + sockets + connectors all follow the footprint's
@@ -788,8 +897,9 @@
         G.add(box(24.86, 8.5, 2.4, M.blackP, 30.226, -5.85, -50.8));
         G.add(box(19.78, 8.5, 2.4, M.blackP, 54.61, -5.85, -50.8));
         G.add(box(4.7, 8.5, 7.2, M.blackP, 64.9, -5.85, -27.94));
-        G.add(box(15.75, 6.5, 11.81, M.silver, 1.535, -6.85, -38.0986));
-        G.add(box(13.49, 7.5, 8.99, M.blackP, 5.065, -6.35, -7.7981));
+        G.add(box(15.75, 8.5, 11.81, M.silver, 1.535, -5.85, -38.0986));
+        G.add(box(14.5, 9.0, 8.99, M.blackP, 3.2, -5.6, -7.7981));
+        G.add(box(35.5, 3.2, 7.6, M.blackP, 44.0, -8.5, -16.5));
       }
       g.add(G);
     });
@@ -797,11 +907,12 @@
 
   function fitCam3D() {
     var d = Math.hypot(doc.w, doc.h) * 1.5 + 45;
-    var th = 0.55, ph = 1.0;
+    var th = 0.55, ph = 1.0, cy = 0;
     for (var i = 0; i < doc.parts.length; i++) {
       if (doc.parts[i].type === "uno") { ph = 0.78; d += 15; break; }
+      if (doc.parts[i].type === "ubit") { ph = 0.72; d += 26; cy = 10; break; }
     }
-    var c = new T3.Vector3(doc.w / 2, 0, doc.h / 2);
+    var c = new T3.Vector3(doc.w / 2, cy, doc.h / 2);
     three3d.camera.position.set(
       c.x + Math.sin(th) * d * Math.cos(ph),
       Math.sin(ph) * d,
@@ -955,17 +1066,6 @@
     }
     return true;
   }
-  function dockUbit(x, y) {
-    var m = 28;
-    var edges = [
-      { d: y, rot: 0, x: Math.max(m, Math.min(doc.w - m, PCB.snap(x))), y: 0 },
-      { d: doc.h - y, rot: 180, x: Math.max(m, Math.min(doc.w - m, PCB.snap(x))), y: doc.h },
-      { d: x, rot: 270, x: 0, y: Math.max(m, Math.min(doc.h - m, PCB.snap(y))) },
-      { d: doc.w - x, rot: 90, x: doc.w, y: Math.max(m, Math.min(doc.h - m, PCB.snap(y))) }
-    ];
-    edges.sort(function (a, b) { return a.d - b.d; });
-    return edges[0];
-  }
   function dockUno() {
     /* the UNO socket IS the board: the board becomes the official shield */
     PCB.setOutline(doc, "uno");
@@ -973,32 +1073,39 @@
     return { x: 0, y: 0, rot: 0 };
   }
   function dockPart(part, x, y) {
-    if (part.type === "ubit") return dockUbit(x, y);
     if (part.type === "uno") return dockUno(x, y);
     return null;
   }
   function rotateSel(uid) {
     var part = PCB.findPart(doc, uid);
     if (!part) return;
-    if (part.type === "ubit") {
-      var next = (part.rot + 90) % 360;
-      if (next === 0) { part.rot = 0; part.y = 0; part.x = Math.max(28, Math.min(doc.w - 28, part.x)); }
-      else if (next === 90) { part.rot = 90; part.x = doc.w; part.y = Math.max(28, Math.min(doc.h - 28, part.y)); }
-      else if (next === 180) { part.rot = 180; part.y = doc.h; part.x = Math.max(28, Math.min(doc.w - 28, part.x)); }
-      else { part.rot = 270; part.x = 0; part.y = Math.max(28, Math.min(doc.h - 28, part.y)); }
-      doc.routes = [];
-      return;
-    }
     if (part.type === "uno") {
       setStatus(t("unoFixed"));
       return;
     }
     PCB.rotatePart(doc, uid);
+    var bb = PCB.bodyBox(part);
+    if (part.type === "ubit" && doc.outline !== "uno") {
+      if ((part.rot === 90 || part.rot === 270) && doc.h < 62) { doc.h = 64; syncHead(); }
+      if ((part.rot === 0 || part.rot === 180) && doc.w < 62) { doc.w = 72; syncHead(); }
+      bb = PCB.bodyBox(part);
+    }
+    var hw = bb.w / 2 + 1.27, hh = bb.h / 2 + 1.27;
+    part.x = PCB.snap(Math.max(hw, Math.min(doc.w - hw, part.x)));
+    part.y = PCB.snap(Math.max(hh, Math.min(doc.h - hh, part.y)));
   }
   function freeSpot(type) {
-    for (var i = 0; i < 24; i++) {
-      var x = PCB.snap(doc.w / 2 + ((i % 6) - 2.5) * 7);
-      var y = PCB.snap(doc.h / 2 + (Math.floor(i / 6) - 1.5) * 7);
+    if (type === "ubit") {
+      if (doc.outline !== "uno" && doc.w < 64) { doc.w = 72; syncHead(); }
+      var cx = PCB.snap(doc.w / 2);
+      var cands = [PCB.snap(doc.h - 11.43), PCB.snap(11.43), PCB.snap(doc.h / 2)];
+      for (var k = 0; k < cands.length; k++) {
+        if (fits(type, cx, cands[k])) return { x: cx, y: cands[k] };
+      }
+    }
+    for (var i = 0; i < 36; i++) {
+      var x = PCB.snap(doc.w / 2 + ((i % 6) - 2.5) * 6.35);
+      var y = PCB.snap(doc.h / 2 + (Math.floor(i / 6) - 2.5) * 6.35);
       if (fits(type, x, y)) return { x: x, y: y };
     }
     return null;
@@ -1026,28 +1133,67 @@
       g.fillStyle = "#ffd7a8";
       g.beginPath(); g.arc(34, 20, 4, 0, Math.PI * 2); g.fill();
     } else if (kind === "res") {
+      g.strokeStyle = "#8a7040"; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(8, 25); g.lineTo(68, 25); g.stroke();
       g.fillStyle = "#e4c48c";
-      g.fillRect(16, 18, 44, 14);
-      g.fillStyle = "#c43b34"; g.fillRect(30, 18, 5, 14);
-      g.fillStyle = "#4030a0"; g.fillRect(38, 18, 4, 14);
+      g.fillRect(18, 18, 40, 14);
+      g.fillStyle = "#e6721c"; g.fillRect(24, 18, 4, 14);
+      g.fillStyle = "#e6721c"; g.fillRect(32, 18, 4, 14);
+      g.fillStyle = "#6e3b1e"; g.fillRect(40, 18, 4, 14);
+      g.fillStyle = "#d4a834"; g.fillRect(50, 18, 3, 14);
+    } else if (kind === "ldr") {
+      g.fillStyle = "#dc6e32";
+      g.beginPath(); g.ellipse(38, 26, 15, 11, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = "#f4f1ea"; g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(28, 21); g.lineTo(48, 21); g.lineTo(28, 26); g.lineTo(48, 26); g.lineTo(28, 31); g.lineTo(48, 31);
+      g.stroke();
     } else if (kind === "sw") {
       g.fillStyle = "#30343c";
       g.fillRect(24, 14, 28, 24);
       g.fillStyle = "#4084e8";
       g.beginPath(); g.arc(38, 26, 8, 0, Math.PI * 2); g.fill();
+    } else if (kind === "ssw") {
+      g.fillStyle = "#aeb4be";
+      g.fillRect(18, 20, 40, 14);
+      g.fillStyle = "#242830";
+      g.fillRect(26, 12, 10, 14);
+      g.fillStyle = "#d4a834";
+      g.fillRect(23, 34, 4, 7); g.fillRect(36, 34, 4, 7); g.fillRect(49, 34, 4, 7);
+    } else if (kind === "pot") {
+      g.fillStyle = "#3268c8";
+      g.fillRect(23, 12, 30, 26);
+      g.fillStyle = "#f2efe8";
+      g.beginPath(); g.arc(38, 25, 9, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = "#242830"; g.lineWidth = 2.2;
+      g.beginPath(); g.moveTo(38, 17); g.lineTo(38, 26); g.stroke();
+    } else if (kind === "cap") {
+      g.fillStyle = "#24487a";
+      g.beginPath(); g.arc(38, 26, 13, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#e6e2d8";
+      g.fillRect(44, 15, 5, 22);
+      g.fillStyle = "#f4f1ea";
+      g.fillRect(28, 25, 7, 2); g.fillRect(30.5, 22.5, 2, 7);
     } else if (kind === "buzz") {
       g.fillStyle = "#2a2e36";
       g.beginPath(); g.arc(38, 26, 14, 0, Math.PI * 2); g.fill();
       g.strokeStyle = "#e8b040"; g.lineWidth = 2;
-      g.beginPath(); g.arc(38, 26, 6, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.arc(38, 26, 5, 0, Math.PI * 2); g.stroke();
     } else if (kind === "bat") {
-      g.fillStyle = "#b0b6be";
-      g.fillRect(16, 14, 44, 24);
+      g.fillStyle = "#2a2e36";
+      g.beginPath(); g.arc(38, 26, 15, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#cfd4dc";
+      g.beginPath(); g.arc(38, 26, 12, 0, Math.PI * 2); g.fill();
       g.fillStyle = "#d4a840";
-      g.beginPath(); g.arc(38, 26, 8, 0, Math.PI * 2); g.fill();
+      g.fillRect(22, 23, 20, 6);
       g.fillStyle = "#c42828";
-      g.fillRect(36, 20, 4, 8);
-      g.fillRect(34, 22, 8, 4);
+      g.fillRect(44, 22, 2, 8); g.fillRect(41, 25, 8, 2);
+    } else if (kind === "srv") {
+      g.fillStyle = "#242830"; g.fillRect(20, 22, 12, 14);
+      g.fillStyle = "#c42828"; g.fillRect(32, 22, 12, 14);
+      g.fillStyle = "#e89a20"; g.fillRect(44, 22, 12, 14);
+      g.fillStyle = "#d4a834";
+      g.fillRect(24, 12, 4, 10); g.fillRect(36, 12, 4, 10); g.fillRect(48, 12, 4, 10);
     } else if (kind === "header") {
       g.fillStyle = "#242830";
       g.fillRect(34, 8, 8, 36);
@@ -1056,14 +1202,16 @@
       g.fillRect(30, 24, 6, 4);
       g.fillRect(30, 36, 6, 4);
     } else if (kind === "ubit") {
-      g.fillStyle = "#2a4a78";
-      g.beginPath(); g.roundRect(14, 8, 48, 30, 4); g.fill();
-      g.fillStyle = "#ffd640";
-      for (var rx = 0; rx < 5; rx++) for (var ry = 0; ry < 5; ry++) {
-        g.beginPath(); g.arc(24 + rx * 7, 13 + ry * 5, 1.8, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#20242c";
+      g.beginPath(); g.roundRect(16, 8, 44, 24, 3); g.fill();
+      g.fillStyle = "#e23636";
+      for (var rx = 0; rx < 5; rx++) for (var ry = 0; ry < 3; ry++) {
+        g.fillRect(28 + rx * 4.5, 12 + ry * 4.5, 2.4, 2.4);
       }
-      g.fillStyle = "#e8b040";
-      g.fillRect(14, 41, 48, 5);
+      g.fillStyle = "#d4a834";
+      g.fillRect(18, 31, 40, 4);
+      g.fillStyle = "#181a20";
+      g.fillRect(10, 34, 56, 9);
     } else if (kind === "uno") {
       g.fillStyle = "#007a8a";
       g.beginPath(); g.roundRect(10, 10, 56, 32, 4); g.fill();
@@ -1148,6 +1296,11 @@
           syncHead();
           return;
         }
+        if (type === "ubit" && doc.outline !== "uno" && doc.w < 64) { doc.w = 72; syncHead(); }
+        if (type === "ubit") {
+          x = PCB.snap(Math.max(30.48, Math.min(doc.w - 30.48, x)));
+          y = PCB.snap(Math.max(5.08, Math.min(doc.h - 5.08, y)));
+        }
         if (!fits(type, x, y)) { setStatus(t("noFit")); draw(); return; }
         mutate(function () { PCB.addPart(doc, type, x, y); });
       });
@@ -1191,11 +1344,12 @@
     return { x: (px - view.ox) / view.s, y: doc.h - (py - view.oy) / view.s };
   }
 
-    function hitPad(x, y) {
+  function hitPad(x, y) {
     var best = null, bestD = 14;
     doc.parts.forEach(function (part) {
       if (PCB.partById(part.type).mechanical) return;
       PCB.worldPads(part).forEach(function (p) {
+        if (p.mechanical) return;
         var c = b2c(p.x, p.y);
         var d = Math.hypot(x - c[0], y - c[1]);
         var lim = Math.max(12, (p.dia / 2) * view.s + 6);
@@ -1229,63 +1383,153 @@
       ctx.strokeRect(-w / 2 * s, -h / 2 * s, w * s, h * s);
     }
     if (spec.draw.kind === "led") {
-      var col = part.value === "綠" ? "46,168,86" : part.value === "琥珀" ? "232,146,32" : "226,54,54";
-      /* PCB-layout style: translucent colour fill + white silk outline */
-      ctx.fillStyle = "rgba(" + col + ",0.95)";
+      var col = part.value === "綠" ? "46,168,86" : part.value === "琥珀" ? "232,146,32" : part.value === "藍" ? "46,126,240" : part.value === "白" ? "236,240,248" : "226,54,54";
+      ctx.fillStyle = "rgba(" + col + ",0.45)";
       ctx.beginPath();
-      ctx.arc(0, 0, 2.3 * s, 0, Math.PI * 2);
+      ctx.arc(0, 0, 2.5 * s, 0.22 * Math.PI, 1.78 * Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    } else if (spec.draw.kind === "res") {
+      ctx.strokeStyle = "#d4b878";
+      ctx.lineWidth = Math.max(1.5, 0.55 * s);
+      ctx.beginPath();
+      ctx.moveTo(-5.08 * s, 0); ctx.lineTo(-3.2 * s, 0);
+      ctx.moveTo(3.2 * s, 0); ctx.lineTo(5.08 * s, 0);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(228,196,140,0.92)";
+      ctx.fillRect(-3.2 * s, -1.2 * s, 6.4 * s, 2.4 * s);
+      var rBands = RES_BANDS[part.value] || RES_BANDS["330"];
+      [-2.0, -0.8, 0.4, 1.9].forEach(function (bx, bi) {
+        ctx.fillStyle = rBands[bi][0];
+        ctx.fillRect((bx - 0.32) * s, -1.2 * s, 0.64 * s, 2.4 * s);
+      });
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(-3.2 * s, -1.2 * s, 6.4 * s, 2.4 * s);
+    } else if (spec.draw.kind === "ldr") {
+      ctx.fillStyle = "rgba(220,110,50,0.82)";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 2.3 * s, 1.9 * s, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "#f4f1ea";
       ctx.lineWidth = 1.25;
       ctx.stroke();
-      /* cathode flat mark on the K side */
       ctx.beginPath();
-      ctx.moveTo(1.9 * s, -0.95 * s);
-      ctx.lineTo(1.9 * s, 0.95 * s);
-      ctx.lineWidth = 2;
+      ctx.moveTo(-1.1 * s, -0.75 * s); ctx.lineTo(1.1 * s, -0.75 * s);
+      ctx.lineTo(-1.1 * s, 0); ctx.lineTo(1.1 * s, 0);
+      ctx.lineTo(-1.1 * s, 0.75 * s); ctx.lineTo(1.1 * s, 0.75 * s);
       ctx.stroke();
-    } else if (spec.draw.kind === "res") {
-      ctx.fillStyle = "rgba(228,196,140,0.85)";
-      ctx.fillRect(-3.4 * s, -1.3 * s, 6.8 * s, 2.6 * s);
-      ctx.strokeStyle = "#f4f1ea";
-      ctx.lineWidth = 1.25;
-      ctx.strokeRect(-3.4 * s, -1.3 * s, 6.8 * s, 2.6 * s);
-      ctx.fillStyle = "rgba(196,59,52,0.95)";
-      ctx.fillRect(-0.4 * s, -1.3 * s, 0.9 * s, 2.6 * s);
-      ctx.fillStyle = "rgba(64,48,160,0.95)";
-      ctx.fillRect(1.1 * s, -1.3 * s, 0.7 * s, 2.6 * s);
     } else if (spec.draw.kind === "sw") {
-      ctx.fillStyle = "rgba(48,52,60,0.85)";
-      ctx.fillRect(-3.1 * s, -3.1 * s, 6.2 * s, 6.2 * s);
+      ctx.fillStyle = "rgba(48,52,60,0.88)";
+      ctx.fillRect(-3.0 * s, -3.0 * s, 6.0 * s, 6.0 * s);
       ctx.strokeStyle = "#f4f1ea";
       ctx.lineWidth = 1.25;
-      ctx.strokeRect(-3.1 * s, -3.1 * s, 6.2 * s, 6.2 * s);
+      ctx.strokeRect(-3.0 * s, -3.0 * s, 6.0 * s, 6.0 * s);
+      ctx.strokeStyle = "rgba(244,241,234,0.45)";
       ctx.beginPath();
-      ctx.arc(0, 0, 1.7 * s, 0, Math.PI * 2);
+      ctx.moveTo(-3.25 * s, 2.25 * s); ctx.lineTo(3.25 * s, 2.25 * s);
+      ctx.moveTo(-3.25 * s, -2.25 * s); ctx.lineTo(3.25 * s, -2.25 * s);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(64,132,232,0.9)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 1.65 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.stroke();
+    } else if (spec.draw.kind === "ssw") {
+      ctx.fillStyle = "rgba(56,62,72,0.88)";
+      ctx.fillRect(-4.3 * s, -1.9 * s, 8.6 * s, 3.8 * s);
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(-4.3 * s, -1.9 * s, 8.6 * s, 3.8 * s);
+      ctx.fillStyle = "#1c1e24";
+      ctx.fillRect(-1.8 * s, -0.95 * s, 2.2 * s, 1.9 * s);
+      ctx.strokeRect(-1.8 * s, -0.95 * s, 2.2 * s, 1.9 * s);
+    } else if (spec.draw.kind === "pot") {
+      ctx.fillStyle = "rgba(48,96,184,0.82)";
+      ctx.fillRect(-3.4 * s, -3.4 * s, 6.8 * s, 6.8 * s);
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(-3.4 * s, -3.4 * s, 6.8 * s, 6.8 * s);
+      ctx.fillStyle = "rgba(242,239,232,0.9)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.1 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#1c1e24";
+      ctx.lineWidth = Math.max(1.5, 0.35 * s);
+      ctx.beginPath();
+      ctx.moveTo(0, -1.8 * s); ctx.lineTo(0, 0.5 * s);
+      ctx.stroke();
+    } else if (spec.draw.kind === "cap") {
+      ctx.fillStyle = "rgba(36,72,122,0.78)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.5 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(244,241,234,0.85)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.5 * s, -0.32 * Math.PI, 0.32 * Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.5 * s, 0, Math.PI * 2);
       ctx.stroke();
     } else if (spec.draw.kind === "buzz") {
       ctx.fillStyle = "rgba(42,46,54,0.85)";
       ctx.beginPath();
-      ctx.arc(0, 0, 4.9 * s, 0, Math.PI * 2);
+      ctx.arc(0, 0, 5.8 * s, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "#f4f1ea";
       ctx.lineWidth = 1.25;
       ctx.stroke();
-      ctx.strokeStyle = "rgba(244,241,234,0.8)";
+      ctx.strokeStyle = "rgba(240,192,72,0.85)";
       ctx.lineWidth = Math.max(1.5, 0.3 * s);
       ctx.beginPath();
-      ctx.arc(0, 0, 2.2 * s, 0, Math.PI * 2);
+      ctx.arc(0, 0, 1.9 * s, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.fillStyle = "#f4f1ea";
+      ctx.fillRect(-3.8 * s, -2.5 * s, 1.4 * s, 0.35 * s);
+      ctx.fillRect(-3.275 * s, -3.025 * s, 0.35 * s, 1.4 * s);
     } else if (spec.draw.kind === "bat") {
-      ctx.fillStyle = "rgba(176,182,190,0.75)";
-      ctx.fillRect(-8 * s, -5.5 * s, 16 * s, 11 * s);
+      ctx.fillStyle = "rgba(44,48,56,0.72)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 10.4 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(206,212,220,0.55)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 8.8 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(238,190,68,0.82)";
+      ctx.fillRect(-10.2 * s, -1.5 * s, 11.2 * s, 3.0 * s);
+      ctx.fillStyle = "#f4f1ea";
+      ctx.fillRect(-6.8 * s, -0.3 * s, 2.4 * s, 0.6 * s);
+      ctx.fillRect(-5.9 * s, -1.2 * s, 0.6 * s, 2.4 * s);
+      ctx.fillRect(4.8 * s, -0.3 * s, 2.4 * s, 0.6 * s);
+    } else if (spec.draw.kind === "srv") {
+      ctx.fillStyle = "rgba(36,40,48,0.9)";
+      ctx.fillRect(-3.81 * s, -1.27 * s, 2.54 * s, 2.54 * s);
+      ctx.fillStyle = "rgba(186,44,40,0.88)";
+      ctx.fillRect(-1.27 * s, -1.27 * s, 2.54 * s, 2.54 * s);
+      ctx.fillStyle = "rgba(224,148,28,0.88)";
+      ctx.fillRect(1.27 * s, -1.27 * s, 2.54 * s, 2.54 * s);
       ctx.strokeStyle = "#f4f1ea";
       ctx.lineWidth = 1.25;
-      ctx.strokeRect(-8 * s, -5.5 * s, 16 * s, 11 * s);
-      ctx.fillStyle = "rgba(244,241,234,0.95)";
-      ctx.fillRect(5.2 * s, -0.25 * s, 2.2 * s, 0.5 * s);
-      ctx.fillRect(5.95 * s, -1 * s, 0.5 * s, 2 * s);
-      ctx.fillRect(-7.4 * s, -0.25 * s, 2.2 * s, 0.5 * s);
+      ctx.strokeRect(-3.81 * s, -1.27 * s, 7.62 * s, 2.54 * s);
+      ctx.fillStyle = "#f4f1ea";
+      ctx.font = Math.max(7, 1.15 * s) + "px " + getComputedStyle(document.body).fontFamily;
+      ctx.textAlign = "center";
+      ["G", "V", "S"].forEach(function (lb, idx) {
+        ctx.fillText(lb, (idx - 1) * 2.54 * s, -1.75 * s);
+      });
+      ctx.textAlign = "start";
     } else if (spec.draw.kind === "header") {
       ctx.fillStyle = "rgba(36,40,48,0.85)";
       ctx.fillRect(-1.2 * s, -spec.draw.n * 1.27 * s, 2.4 * s, spec.draw.n * 2.54 * s);
@@ -1333,87 +1577,50 @@
       ctx.lineWidth = 1.5;
       ctx.stroke();
     } else if (spec.draw.kind === "ubit") {
-      ctx.fillStyle = "#e8b040";
-      for (var fi = 0; fi < 40; fi++) {
-        ctx.fillRect((-24.765 - 0.6 + fi * 1.27) * s, -5.08 * s, 1.2 * s, 5.08 * s);
-      }
-      /* the docked micro:bit: outline only, the circuit below stays readable */
-      ctx.fillStyle = "rgba(36, 72, 118, 0.15)";
+      /* BBC micro:bit 80-pin THT Edge Connector Socket (56.8 x 8.8mm) */
+      ctx.fillStyle = "rgba(28, 32, 40, 0.92)";
       ctx.beginPath();
-      ctx.roundRect(-25.8 * s, -42 * s, 51.6 * s, 42 * s, Math.min(6, 1.5 * s));
+      ctx.roundRect(-28.4 * s, -4.4 * s, 56.8 * s, 8.8 * s, Math.min(4, 0.8 * s));
       ctx.fill();
-      ctx.strokeStyle = "rgba(244, 241, 234, 0.9)";
-      ctx.lineWidth = 1.25;
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 1.3;
       ctx.stroke();
-      ctx.fillStyle = "#c4c8ce";
-      ctx.fillRect(0.8 * s, -42.4 * s, 4.5 * s, 2.1 * s);
-      ctx.fillStyle = "#ffd640";
-      for (var mx = -2; mx <= 2; mx++) {
-        for (var my = 0; my < 5; my++) {
-          ctx.beginPath();
-          ctx.arc(mx * 4 * s, -(17 + my * 4) * s, Math.max(1.5, 1.05 * s), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
+      /* Central card-edge slot where the micro:bit plugs in vertically */
+      ctx.fillStyle = "#101318";
+      ctx.fillRect(-25.8 * s, -0.75 * s, 51.6 * s, 1.5 * s);
+      ctx.strokeStyle = "rgba(232, 184, 76, 0.65)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-25.8 * s, -0.75 * s, 51.6 * s, 1.5 * s);
     } else if (spec.draw.kind === "hole") {
-      ctx.strokeStyle = "#8a5a0c";
-      ctx.lineWidth = Math.max(2, 0.4 * s);
+      ctx.strokeStyle = "rgba(244, 241, 234, 0.75)";
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.arc(0, 0, 2.2 * s, 0, Math.PI * 2);
+      ctx.arc(0, 0, 3.25 * s, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.restore();
     if (spec.draw.kind === "ubit" && !ghost) {
-      /* labels in board coordinates so they always read upright */
-      var bc = PCB.bodyBox(part);
-      var cx = bc.x + bc.w / 2, cy = bc.y + bc.h / 2;
-      var groups = {};
-      var edgeAll = [];
-      PCB.worldPads(part).forEach(function (p) {
-        edgeAll.push(p);
-        if (["GND", "3V", "P0", "P1", "P2"].indexOf(p.group) < 0) return;
-        (groups[p.group] = groups[p.group] || []).push(p);
-      });
-      var ex = edgeAll.reduce(function (a, p) { return a + p.x; }, 0) / edgeAll.length;
-      var ey = edgeAll.reduce(function (a, p) { return a + p.y; }, 0) / edgeAll.length;
+      /* Upright pin labels outside the socket housing */
+      ctx.save();
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      var vertEdge = part.rot === 90 || part.rot === 270;
-      if (vertEdge) {
-        var signX = (cx - ex) >= 0 ? 1 : -1;
-        Object.keys(groups).forEach(function (gk) {
-          var ps = groups[gk];
-          var py = ps.reduce(function (a, p) { return a + p.y; }, 0) / ps.length;
-          var c = b2c(ex + signX * 7.2, py);
-          ctx.fillStyle = "#f4f1ea";
-          ctx.font = Math.max(7, 1.8 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
-          ctx.fillText(gk, c[0], c[1]);
-        });
-        if (edgeAll.length) {
-          var tcV = b2c(ex + signX * 14, cy);
-          ctx.fillStyle = "#f4f1ea";
-          ctx.font = Math.max(9, 2.6 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
-          ctx.fillText("micro:bit", tcV[0], tcV[1]);
-        }
-      } else {
-        var sign = (cy - ey) >= 0 ? 1 : -1;
-        Object.keys(groups).forEach(function (gk) {
-          var ps = groups[gk];
-          var px = ps.reduce(function (a, p) { return a + p.x; }, 0) / ps.length;
-          var c = b2c(px, ey + sign * 7);
-          ctx.fillStyle = "#f4f1ea";
-          ctx.font = Math.max(7, 1.8 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
-          ctx.fillText(gk, c[0], c[1]);
-        });
-        if (edgeAll.length) {
-          var tc = b2c(cx, ey + sign * 11.5);
-          ctx.fillStyle = "#f4f1ea";
-          ctx.font = Math.max(9, 2.6 * view.s) + "px " + getComputedStyle(document.body).fontFamily;
-          ctx.fillText("micro:bit", tc[0], tc[1]);
-        }
-      }
-      ctx.textAlign = "start";
-      ctx.textBaseline = "alphabetic";
+      var fam = getComputedStyle(document.body).fontFamily;
+      spec.pads.forEach(function (lp) {
+        if (lp.mechanical) return;
+        if (!lp.ring && view.s < 6.2) return;
+        var distOut = lp.ring ? 5.6 : 3.55;
+        var dxy = [lp.x, lp.y >= 0 ? distOut : -distOut];
+        var kk = ((part.rot || 0) / 90) | 0;
+        var rxy = kk === 1 ? [-dxy[1], dxy[0]] : kk === 2 ? [-dxy[0], -dxy[1]] : kk === 3 ? [dxy[1], -dxy[0]] : dxy;
+        var c = b2c(part.x + rxy[0], part.y + rxy[1]);
+        ctx.font = (lp.ring ? "600 " + Math.max(8, 1.35 * view.s) : Math.max(6.5, 0.92 * view.s)) + "px " + fam;
+        ctx.strokeStyle = "rgba(16, 26, 20, 0.9)";
+        ctx.lineWidth = 2.4;
+        ctx.strokeText(lp.label, c[0], c[1]);
+        ctx.fillStyle = lp.ring ? "#ffd86b" : "rgba(244, 241, 234, 0.88)";
+        ctx.fillText(lp.label, c[0], c[1]);
+      });
+      ctx.restore();
     }
     if (part.uid && part.uid === selected) {
       var b = PCB.bodyBox(part);
@@ -1544,17 +1751,22 @@ var mainEl = document.querySelector("main");
     doc.parts.forEach(function (part) {
       PCB.worldPads(part).forEach(function (p) {
         var c = b2c(p.x, p.y);
+        var padFill = p.mechanical ? "#c8b894" : (p.ring ? "#f4cf68" : "#e8c474");
         if (p.shape === "rect") {
           var hw = p.w / 2 * view.s, hh = p.h / 2 * view.s;
-          ctx.fillStyle = "#e7d7a8";
+          ctx.fillStyle = padFill;
           ctx.fillRect(c[0] - hw, c[1] - hh, hw * 2, hh * 2);
         } else {
           ctx.beginPath();
           ctx.arc(c[0], c[1], (p.dia / 2) * view.s, 0, Math.PI * 2);
-          ctx.fillStyle = "#e7d7a8";
+          ctx.fillStyle = padFill;
           ctx.fill();
-          /* no drill dot in 2D: under a part body it reads as a pupil;
-             the drill lives in the gerber and the 3D view */
+        }
+        if (p.drill) {
+          ctx.beginPath();
+          ctx.arc(c[0], c[1], Math.max(1.2, (p.drill / 2) * view.s * 0.76), 0, Math.PI * 2);
+          ctx.fillStyle = "#18241e";
+          ctx.fill();
         }
         if (hoverSibs[part.uid + ":" + p.id]) {
           ctx.beginPath();
@@ -1572,14 +1784,19 @@ var mainEl = document.querySelector("main");
           ctx.stroke();
         }
       });
-      ctx.fillStyle = "#f4f1ea";
-      ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
-      var box = PCB.bodyBox(part);
-      var tp = b2c(box.x, box.y + box.h);
-      ctx.strokeStyle = "rgba(16, 28, 22, 0.85)";
-      ctx.lineWidth = 3;
-      ctx.strokeText(part.ref, tp[0], tp[1] - 4);
-      ctx.fillText(part.ref, tp[0], tp[1] - 4);
+      if (part.type !== "uno" && part.type !== "hole") {
+        ctx.fillStyle = "#f4f1ea";
+        ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+        var box = PCB.bodyBox(part);
+        var topNear = box.y + box.h > doc.h - 3.2;
+        var tp = topNear ? b2c(box.x, box.y) : b2c(box.x, box.y + box.h);
+        var ty = topNear ? tp[1] + 13 : tp[1] - 4;
+        var refTxt = part.ref + (part.value && (part.type === "res" || part.type === "cap" || part.type === "pot") ? " · " + part.value : "");
+        ctx.strokeStyle = "rgba(16, 28, 22, 0.85)";
+        ctx.lineWidth = 3;
+        ctx.strokeText(refTxt, tp[0], ty);
+        ctx.fillText(refTxt, tp[0], ty);
+      }
     });
     if (wire && wirePt && cursorPt) {
       var targetC = hoverPad ? b2c(hoverPad.x, hoverPad.y) : b2c(cursorPt.x, cursorPt.y);
@@ -1897,7 +2114,7 @@ var mainEl = document.querySelector("main");
             PCB.findPart(doc, part.uid).rot = dk.rot;
           });
         }
-      } else if (!fits(part.type, x, y, part.uid)) {
+      } else if (!fits(part.type, x, y, part.uid, part.rot)) {
         setStatus(t("noFit"));
         draw();
       } else {

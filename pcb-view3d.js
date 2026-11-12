@@ -133,6 +133,8 @@
   function ledColor(part) {
     if (part.value === "綠") return [42, 176, 86];
     if (part.value === "琥珀") return [240, 150, 32];
+    if (part.value === "藍") return [56, 130, 240];
+    if (part.value === "白") return [236, 240, 248];
     return [230, 52, 58];
   }
 
@@ -248,19 +250,24 @@
         faces = cyl(part.x, part.y, t, t + 5.8, 5.5, [40, 44, 52], 22)
           .concat(cyl(part.x, part.y, t + 5.8, t + 6.15, 2.3, [240, 176, 48], 14));
       } else if (part.type === "bat") {
-        faces = boxFaces(part.x, part.y, t, 16.5, 11, 3.4, [176, 184, 192], k)
-          .concat(cyl(part.x, part.y, t + 3.4, t + 4.15, 5.8, [214, 168, 52], 18));
+        faces = cyl(part.x, part.y, t, t + 4.2, 10.6, [44, 48, 56], 22)
+          .concat(cyl(part.x, part.y, t + 1.2, t + 4.4, 9.6, [206, 212, 220], 20))
+          .concat(boxFaces(part.x - 6, part.y, t + 4.4, 8, 2.6, 0.4, [238, 190, 68], k));
+      } else if (part.type === "ldr") {
+        faces = cyl(part.x, part.y, t + 2.2, t + 3.6, 2.2, [224, 120, 56], 16);
+      } else if (part.type === "ssw") {
+        faces = boxFaces(part.x, part.y, t, 8.6, 3.8, 3.5, [186, 192, 200], k)
+          .concat(boxFaces(part.x - 1.2, part.y, t + 3.5, 2.0, 1.8, 3.2, [36, 40, 48], k));
+      } else if (part.type === "pot") {
+        faces = boxFaces(part.x, part.y, t, 6.8, 6.8, 4.2, [48, 108, 196], k)
+          .concat(cyl(part.x, part.y, t + 4.2, t + 5.6, 2.3, [238, 236, 228], 16));
+      } else if (part.type === "cap") {
+        faces = cyl(part.x, part.y, t + 0.6, t + 7.2, 2.4, [38, 62, 118], 18);
+      } else if (part.type === "srv") {
+        faces = boxFaces(part.x, part.y, t, 7.62, 2.54, 2.5, [34, 38, 46], k);
       } else if (part.type === "ubit") {
-        var sc = rot90(0, 21, k);
-        faces = boxFaces(part.x + sc[0], part.y + sc[1], t + 0.25, 51.6, 42, 1.9, [36, 72, 116], k);
-        var bc = rot90(0, 0.6, k);
-        faces = faces.concat(boxFaces(part.x + bc[0], part.y + bc[1], t + 0.25, 51.6, 1.2, 1.98, [240, 193, 74], k));
-        for (var mx = -2; mx <= 2; mx++) {
-          for (var my = 0; my < 5; my++) {
-            var dp = rot90(mx * 4, 17 + my * 4, k);
-            faces = faces.concat(cyl(part.x + dp[0], part.y + dp[1], t + 2.15, t + 2.35, 1.05, [255, 214, 64], 8));
-          }
-        }
+        faces = boxFaces(part.x, part.y, t, 56.8, 8.8, 9.5, [34, 38, 46], k)
+          .concat(boxFaces(part.x, part.y, t + 6.0, 51.6, 1.6, 40.0, [36, 72, 118], k));
       } else if (part.type === "uno") {
         function lp(lx, ly) {
           var r = rot90(lx, ly, k);
