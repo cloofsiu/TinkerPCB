@@ -82,4 +82,38 @@ if (!cc.ok) { console.log("clean check", JSON.stringify(cc.errors)); process.exi
 console.log("sanitize ok");
 var nothing = PCB.sanitize({ parts: [{ uid: "p1", type: "ghost", x: 1, y: 1 }], nets: [] });
 if (nothing !== null) { console.log("expected null"); process.exit(1); }
+
+/* Test legacy v1 ubit draft and colliding parts de-overlap */
+var legacyUbit = PCB.sanitize({
+  version: 1,
+  name: "micro:bit 小燈",
+  w: 66,
+  h: 62,
+  parts: [
+    { uid: "p1", type: "ubit", x: 33, y: 0, rot: 0, ref: "U1" },
+    { uid: "p2", type: "led", x: 60.96, y: 50.8, rot: 0, ref: "D1" },
+    { uid: "p3", type: "res", x: 45.72, y: 50.8, rot: 0, ref: "R1", value: "330" }
+  ],
+  nets: []
+});
+if (!legacyUbit || !PCB.check(legacyUbit).ok) {
+  console.log("legacyUbit collision:", JSON.stringify(PCB.check(legacyUbit)));
+  process.exit(1);
+}
+var stacked = PCB.sanitize({
+  version: 2,
+  name: "重疊測試",
+  w: 76,
+  h: 56,
+  parts: [
+    { uid: "p1", type: "ubit", x: 38.1, y: 41.91, rot: 0, ref: "U1" },
+    { uid: "p2", type: "led", x: 38.1, y: 41.91, rot: 0, ref: "D1" },
+    { uid: "p3", type: "res", x: 38.1, y: 41.91, rot: 0, ref: "R1" }
+  ],
+  nets: []
+});
+if (!stacked || !PCB.check(stacked).ok) {
+  console.log("stacked de-overlap failed:", JSON.stringify(PCB.check(stacked)));
+  process.exit(1);
+}
 console.log("all tests pass");

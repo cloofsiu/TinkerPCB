@@ -361,8 +361,8 @@
   </footer>
 </div>
 <div id="toast" role="status"></div>
-<script src="pcb-engine.js"></script>
-<script src="pcb-view3d.js"></script>
+<script src="pcb-engine.js?v=2"></script>
+<script src="pcb-view3d.js?v=2"></script>
 <script type="importmap">
 {"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
 </script>
@@ -754,13 +754,13 @@
       G.rotation.y = ((part.rot | 0) * Math.PI) / 180;
       if (part.type === "led") {
         var col = part.value === "綠" ? M.green : part.value === "琥珀" ? M.amber : part.value === "藍" ? M.blue : part.value === "白" ? M.whiteLed : M.red;
-        G.add(cyl(2.85, 1.0, col, 0, 2.0, 0));
-        G.add(cyl(2.5, 5.4, col, 0, 5.2, 0));
-        var dome = new T3.Mesh(new T3.SphereGeometry(2.5, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), col);
-        dome.position.set(0, 7.9, 0);
+        G.add(cyl(2.8, 0.8, col, 0, 1.4, 0));
+        G.add(cyl(2.45, 3.8, col, 0, 3.7, 0));
+        var dome = new T3.Mesh(new T3.SphereGeometry(2.45, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), col);
+        dome.position.set(0, 5.6, 0);
         G.add(dome);
-        G.add(cyl(0.28, 2.6, M.silver, -1.27, 0.5, 0));
-        G.add(cyl(0.28, 2.6, M.silver, 1.27, 0.5, 0));
+        G.add(cyl(0.28, 2.0, M.silver, -1.27, 0.3, 0));
+        G.add(cyl(0.28, 2.0, M.silver, 1.27, 0.3, 0));
       } else if (part.type === "res") {
         var rb = cyl(1.25, 6.4, M.resBody, 0, 3.6, 0);
         rb.rotation.z = Math.PI / 2;
@@ -984,7 +984,7 @@
     if (typeof renderSide === "function" && doc) renderSide();
   }
   var MASKS = { green: "#1f6b45", black: "#1a1a1a", white: "#e4e0d6" };
-  var KEY = "pcb-studio-v1";
+  var KEY = "pcb-studio-v2";
   window.addEventListener("error", function (ev) {
     var msg = (ev && ev.message) ? String(ev.message).slice(0, 90) : "未知錯誤";
     try {
@@ -1049,10 +1049,12 @@
     save();
   }
 
-  function fits(type, x, y, ignore, rot) {
+  function fits(type, x, y, ignore, rot, extra) {
+    var m = extra || 0;
     var ghost = { type: type, x: x, y: y, rot: rot || 0 };
     var box = PCB.bodyBox(ghost);
-    if (box.x < -0.02 || box.y < -0.02 || box.x + box.w > doc.w + 0.02 || box.y + box.h > doc.h + 0.02) return false;
+    var edgePad = type === "uno" ? -0.02 : 0.6;
+    if (box.x < edgePad || box.y < edgePad || box.x + box.w > doc.w - edgePad || box.y + box.h > doc.h - edgePad) return false;
     var ghostRects = PCB.partRects(ghost);
     for (var i = 0; i < doc.parts.length; i++) {
       if (doc.parts[i].uid === ignore) continue;
@@ -1060,7 +1062,7 @@
       for (var a = 0; a < ghostRects.length; a++) {
         for (var j = 0; j < rects.length; j++) {
           var b = rects[j];
-          if (ghostRects[a].x < b.x + b.w && ghostRects[a].x + ghostRects[a].w > b.x && ghostRects[a].y < b.y + b.h && ghostRects[a].y + ghostRects[a].h > b.y) return false;
+          if (ghostRects[a].x - m < b.x + b.w && ghostRects[a].x + ghostRects[a].w + m > b.x && ghostRects[a].y - m < b.y + b.h && ghostRects[a].y + ghostRects[a].h + m > b.y) return false;
         }
       }
     }
@@ -1083,30 +1085,54 @@
       setStatus(t("unoFixed"));
       return;
     }
+    var prevRot = part.rot, prevX = part.x, prevY = part.y;
     PCB.rotatePart(doc, uid);
     var bb = PCB.bodyBox(part);
     if (part.type === "ubit" && doc.outline !== "uno") {
-      if ((part.rot === 90 || part.rot === 270) && doc.h < 62) { doc.h = 64; syncHead(); }
-      if ((part.rot === 0 || part.rot === 180) && doc.w < 62) { doc.w = 72; syncHead(); }
+      if ((part.rot === 90 || part.rot === 270) && doc.h < 66) { doc.h = 68; syncHead(); }
+      if ((part.rot === 0 || part.rot === 180) && doc.w < 68) { doc.w = 76; syncHead(); }
       bb = PCB.bodyBox(part);
     }
     var hw = bb.w / 2 + 1.27, hh = bb.h / 2 + 1.27;
     part.x = PCB.snap(Math.max(hw, Math.min(doc.w - hw, part.x)));
     part.y = PCB.snap(Math.max(hh, Math.min(doc.h - hh, part.y)));
+    if (!fits(part.type, part.x, part.y, part.uid, part.rot)) {
+      var found = false;
+      var ox = part.x, oy = part.y;
+      for (var rad = 1; rad <= 20 && !found; rad++) {
+        for (var dy = -rad; dy <= rad && !found; dy++) {
+          for (var dx = -rad; dx <= rad && !found; dx++) {
+            if (Math.abs(dx) !== rad && Math.abs(dy) !== rad) continue;
+            var nx = PCB.snap(ox + dx * 2.54), ny = PCB.snap(oy + dy * 2.54);
+            if (fits(part.type, nx, ny, part.uid, part.rot)) {
+              part.x = nx; part.y = ny; found = true;
+            }
+          }
+        }
+      }
+      if (!found) {
+        part.rot = prevRot; part.x = prevX; part.y = prevY;
+        setStatus(t("noFit"));
+      }
+    }
   }
   function freeSpot(type) {
     if (type === "ubit") {
-      if (doc.outline !== "uno" && doc.w < 64) { doc.w = 72; syncHead(); }
+      if (doc.outline !== "uno" && doc.w < 68) { doc.w = 76; if (doc.h < 52) doc.h = 56; syncHead(); }
       var cx = PCB.snap(doc.w / 2);
-      var cands = [PCB.snap(doc.h - 11.43), PCB.snap(11.43), PCB.snap(doc.h / 2)];
+      var cands = [PCB.snap(doc.h - 13.97), PCB.snap(13.97), PCB.snap(doc.h / 2)];
       for (var k = 0; k < cands.length; k++) {
-        if (fits(type, cx, cands[k])) return { x: cx, y: cands[k] };
+        if (fits(type, cx, cands[k], null, 0, 1.5)) return { x: cx, y: cands[k] };
       }
     }
-    for (var i = 0; i < 36; i++) {
-      var x = PCB.snap(doc.w / 2 + ((i % 6) - 2.5) * 6.35);
-      var y = PCB.snap(doc.h / 2 + (Math.floor(i / 6) - 2.5) * 6.35);
-      if (fits(type, x, y)) return { x: x, y: y };
+    var passes = [2.2, 0.5];
+    for (var p = 0; p < passes.length; p++) {
+      for (var gy = 10.16; gy <= doc.h - 10.16; gy += 5.08) {
+        for (var gx = 10.16; gx <= doc.w - 10.16; gx += 5.08) {
+          var sx = PCB.snap(gx), sy = PCB.snap(gy);
+          if (fits(type, sx, sy, null, 0, passes[p])) return { x: sx, y: sy };
+        }
+      }
     }
     return null;
   }
@@ -1788,8 +1814,10 @@ var mainEl = document.querySelector("main");
         ctx.fillStyle = "#f4f1ea";
         ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
         var box = PCB.bodyBox(part);
-        var topNear = box.y + box.h > doc.h - 3.2;
-        var tp = topNear ? b2c(box.x, box.y) : b2c(box.x, box.y + box.h);
+        var bx = part.type === "ubit" ? part.x - 28.4 : box.x;
+        var byTop = part.type === "ubit" ? part.y + 4.6 : box.y + box.h;
+        var topNear = byTop > doc.h - 3.2;
+        var tp = topNear ? b2c(bx, box.y) : b2c(bx, byTop);
         var ty = topNear ? tp[1] + 13 : tp[1] - 4;
         var refTxt = part.ref + (part.value && (part.type === "res" || part.type === "cap" || part.type === "pot") ? " · " + part.value : "");
         ctx.strokeStyle = "rgba(16, 28, 22, 0.85)";
